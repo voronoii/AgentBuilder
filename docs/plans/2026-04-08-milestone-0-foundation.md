@@ -89,7 +89,7 @@ AgentBuilder/
 - Create: `README.md`
 - Create: `backend/`, `frontend/`, `backend/app/`, `backend/tests/`, `backend/alembic/versions/`, `frontend/app/`, `frontend/lib/`
 
-- [ ] **Step 1: Initialize git repo**
+- [x] **Step 1: Initialize git repo**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder
@@ -99,7 +99,7 @@ git branch -M main
 
 Expected: `Initialized empty Git repository in /DATA3/users/mj/AgentBuilder/.git/`
 
-- [ ] **Step 2: Create directory skeleton**
+- [x] **Step 2: Create directory skeleton**
 
 ```bash
 mkdir -p backend/app/core backend/app/api backend/tests backend/alembic/versions
@@ -107,7 +107,7 @@ mkdir -p frontend/app frontend/lib
 touch backend/alembic/versions/.gitkeep
 ```
 
-- [ ] **Step 3: Write `.gitignore`**
+- [x] **Step 3: Write `.gitignore`**
 
 Create `/DATA3/users/mj/AgentBuilder/.gitignore`:
 
@@ -153,7 +153,7 @@ uploads/
 !.gitkeep
 ```
 
-- [ ] **Step 4: Write `README.md`**
+- [x] **Step 4: Write `README.md`**
 
 Create `/DATA3/users/mj/AgentBuilder/README.md`:
 
@@ -181,7 +181,7 @@ docker compose up -d
 - `docs/` — design specs, plans, references
 ```
 
-- [ ] **Step 5: First commit**
+- [x] **Step 5: First commit**
 
 ```bash
 git add .gitignore README.md backend/ frontend/ docs/
@@ -197,7 +197,7 @@ Expected: commit succeeds, `git status` clean.
 **Files:**
 - Create: `backend/pyproject.toml`
 
-- [ ] **Step 1: Write `backend/pyproject.toml`**
+- [x] **Step 1: Write `backend/pyproject.toml`**
 
 ```toml
 [project]
@@ -246,7 +246,7 @@ target-version = "py311"
 select = ["E", "F", "I", "N", "UP", "B", "SIM"]
 ```
 
-- [ ] **Step 2: Verify install works locally**
+- [x] **Step 2: Verify install works locally**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder/backend
@@ -257,7 +257,7 @@ pip install -e ".[dev]"
 
 Expected: ends with `Successfully installed ... fastapi-0.115...`. No errors.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder
@@ -277,14 +277,14 @@ git commit -m "build(backend): add pyproject.toml with FastAPI and SQLAlchemy de
 - Create: `backend/tests/conftest.py`
 - Create: `backend/tests/test_config.py`
 
-- [ ] **Step 1: Create empty package files**
+- [x] **Step 1: Create empty package files**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder
 touch backend/app/__init__.py backend/app/core/__init__.py backend/tests/__init__.py
 ```
 
-- [ ] **Step 2: Write `backend/tests/conftest.py`**
+- [x] **Step 2: Write `backend/tests/conftest.py`**
 
 ```python
 from __future__ import annotations
@@ -304,7 +304,7 @@ def isolate_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     yield
 ```
 
-- [ ] **Step 3: Write the failing test in `backend/tests/test_config.py`**
+- [x] **Step 3: Write the failing test in `backend/tests/test_config.py`**
 
 ```python
 from __future__ import annotations
@@ -342,7 +342,7 @@ def test_settings_default_embedding_path():
     )
 ```
 
-- [ ] **Step 4: Run the test, verify it fails**
+- [x] **Step 4: Run the test, verify it fails**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder/backend
@@ -352,7 +352,7 @@ pytest tests/test_config.py -v
 
 Expected: collection error or `ModuleNotFoundError: No module named 'app.core.config'`.
 
-- [ ] **Step 5: Implement `backend/app/core/config.py`**
+- [x] **Step 5: Implement `backend/app/core/config.py`**
 
 ```python
 from __future__ import annotations
@@ -401,7 +401,7 @@ def get_settings() -> Settings:
     return Settings()
 ```
 
-- [ ] **Step 6: Run the test, verify it passes**
+- [x] **Step 6: Run the test, verify it passes**
 
 ```bash
 pytest tests/test_config.py -v
@@ -409,7 +409,7 @@ pytest tests/test_config.py -v
 
 Expected: `3 passed`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder
@@ -427,13 +427,13 @@ git commit -m "feat(backend): add Settings module with env-prefixed config"
 - Create: `backend/app/main.py`
 - Create: `backend/tests/test_health.py`
 
-- [ ] **Step 1: Create empty `api/__init__.py`**
+- [x] **Step 1: Create empty `api/__init__.py`**
 
 ```bash
 touch backend/app/api/__init__.py
 ```
 
-- [ ] **Step 2: Write the failing test in `backend/tests/test_health.py`**
+- [x] **Step 2: Write the failing test in `backend/tests/test_health.py`**
 
 ```python
 from __future__ import annotations
@@ -467,7 +467,7 @@ async def test_health_under_api_v1_prefix(client: AsyncClient):
     assert resp.json()["status"] == "ok"
 ```
 
-- [ ] **Step 3: Run the test, verify it fails**
+- [x] **Step 3: Run the test, verify it fails**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder/backend
@@ -476,7 +476,7 @@ pytest tests/test_health.py -v
 
 Expected: `ModuleNotFoundError: No module named 'app.main'`.
 
-- [ ] **Step 4: Implement `backend/app/api/health.py`**
+- [x] **Step 4: Implement `backend/app/api/health.py`**
 
 ```python
 from __future__ import annotations
@@ -500,7 +500,7 @@ async def health(settings: Settings = Depends(get_settings)) -> dict[str, str]:
     }
 ```
 
-- [ ] **Step 5: Implement `backend/app/main.py`**
+- [x] **Step 5: Implement `backend/app/main.py`**
 
 ```python
 from __future__ import annotations
@@ -531,7 +531,7 @@ def create_app() -> FastAPI:
 app = create_app()
 ```
 
-- [ ] **Step 6: Run the test, verify it passes**
+- [x] **Step 6: Run the test, verify it passes**
 
 ```bash
 pytest tests/test_health.py -v
@@ -539,7 +539,7 @@ pytest tests/test_health.py -v
 
 Expected: `2 passed`.
 
-- [ ] **Step 7: Smoke-run uvicorn locally**
+- [x] **Step 7: Smoke-run uvicorn locally**
 
 ```bash
 uvicorn app.main:app --host 127.0.0.1 --port 8000 &
@@ -550,7 +550,7 @@ kill %1
 
 Expected output: `{"status":"ok","app":"AgentBuilder","version":"0.0.1"}`
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder
@@ -568,7 +568,7 @@ git commit -m "feat(backend): add FastAPI app factory and /health endpoint"
 
 > **Why SQLite for the test:** M0 ships only the engine factory and session dependency — there are no models yet. Pinning the unit test to SQLite-in-memory keeps it hermetic. The Postgres URL gets exercised end-to-end in Task 14.
 
-- [ ] **Step 1: Add aiosqlite to dev deps for the test**
+- [x] **Step 1: Add aiosqlite to dev deps for the test**
 
 Edit `backend/pyproject.toml`, change the `dev` extras list to include `aiosqlite`:
 
@@ -592,7 +592,7 @@ pip install -e ".[dev]"
 
 Expected: `aiosqlite-0.20...` installed.
 
-- [ ] **Step 2: Write the failing test in `backend/tests/test_db.py`**
+- [x] **Step 2: Write the failing test in `backend/tests/test_db.py`**
 
 ```python
 from __future__ import annotations
@@ -632,7 +632,7 @@ async def test_sessionmaker_yields_async_session(sqlite_url: str):
         await engine.dispose()
 ```
 
-- [ ] **Step 3: Run the test, verify it fails**
+- [x] **Step 3: Run the test, verify it fails**
 
 ```bash
 pytest tests/test_db.py -v
@@ -640,7 +640,7 @@ pytest tests/test_db.py -v
 
 Expected: `ModuleNotFoundError: No module named 'app.core.db'`.
 
-- [ ] **Step 4: Implement `backend/app/core/db.py`**
+- [x] **Step 4: Implement `backend/app/core/db.py`**
 
 ```python
 from __future__ import annotations
@@ -694,7 +694,7 @@ async def get_session() -> AsyncIterator[AsyncSession]:
         yield session
 ```
 
-- [ ] **Step 5: Run the test, verify it passes**
+- [x] **Step 5: Run the test, verify it passes**
 
 ```bash
 pytest tests/test_db.py -v
@@ -702,7 +702,7 @@ pytest tests/test_db.py -v
 
 Expected: `2 passed`.
 
-- [ ] **Step 6: Run the full suite**
+- [x] **Step 6: Run the full suite**
 
 ```bash
 pytest -v
@@ -710,7 +710,7 @@ pytest -v
 
 Expected: `7 passed` (3 config + 2 health + 2 db).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder
@@ -728,7 +728,7 @@ git commit -m "feat(backend): add async SQLAlchemy engine and session factory"
 - Create: `backend/alembic/script.py.mako`
 - Create: `backend/alembic/versions/<rev>_baseline.py`
 
-- [ ] **Step 1: Run alembic init**
+- [x] **Step 1: Run alembic init**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder/backend
@@ -737,7 +737,7 @@ alembic init alembic
 
 This creates `alembic.ini`, `alembic/env.py`, `alembic/script.py.mako`, `alembic/README`. We will overwrite `env.py` and edit `alembic.ini`.
 
-- [ ] **Step 2: Edit `backend/alembic.ini`**
+- [x] **Step 2: Edit `backend/alembic.ini`**
 
 Open `backend/alembic.ini` and change two lines:
 
@@ -750,7 +750,7 @@ sqlalchemy.url =
 
 (empty — `env.py` will inject it from Settings.)
 
-- [ ] **Step 3: Replace `backend/alembic/env.py` with this async-aware version**
+- [x] **Step 3: Replace `backend/alembic/env.py` with this async-aware version**
 
 ```python
 from __future__ import annotations
@@ -817,7 +817,7 @@ else:
     run_migrations_online()
 ```
 
-- [ ] **Step 4: Create the empty baseline migration**
+- [x] **Step 4: Create the empty baseline migration**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder/backend
@@ -826,7 +826,7 @@ alembic revision -m "baseline (m0 — empty)"
 
 This creates `alembic/versions/<hash>_baseline_m0_empty.py`. Open the generated file and confirm `upgrade()` and `downgrade()` are `pass` (alembic does this by default — leave them).
 
-- [ ] **Step 5: Verify the baseline can run offline**
+- [x] **Step 5: Verify the baseline can run offline**
 
 ```bash
 alembic upgrade head --sql
@@ -834,11 +834,11 @@ alembic upgrade head --sql
 
 Expected: prints SQL header lines and creates `alembic_version` insert. No errors.
 
-- [ ] **Step 6: Add `backend/alembic/versions/.gitkeep` removal note**
+- [x] **Step 6: Add `backend/alembic/versions/.gitkeep` removal note**
 
 The `.gitkeep` from Task 1 can stay; the new versions file will live alongside it.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder
@@ -854,7 +854,7 @@ git commit -m "build(backend): add alembic with async env.py and empty baseline 
 - Create: `backend/Dockerfile`
 - Create: `backend/.dockerignore`
 
-- [ ] **Step 1: Write `backend/.dockerignore`**
+- [x] **Step 1: Write `backend/.dockerignore`**
 
 ```
 .venv
@@ -870,7 +870,7 @@ tests
 .git
 ```
 
-- [ ] **Step 2: Write `backend/Dockerfile`**
+- [x] **Step 2: Write `backend/Dockerfile`**
 
 ```dockerfile
 FROM python:3.11-slim AS base
@@ -905,7 +905,7 @@ EXPOSE 8000
 CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
 ```
 
-- [ ] **Step 3: Build the image**
+- [x] **Step 3: Build the image**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder
@@ -914,7 +914,7 @@ docker build -t agentbuilder-api:dev backend/
 
 Expected: ends with `Successfully tagged agentbuilder-api:dev`. May take 1–3 minutes first time.
 
-- [ ] **Step 4: Sanity-run the container in isolation**
+- [x] **Step 4: Sanity-run the container in isolation**
 
 ```bash
 docker run --rm -e AGENTBUILDER_DATABASE_URL=sqlite+aiosqlite:///:memory: \
@@ -928,7 +928,7 @@ Expected output: `{"status":"ok","app":"AgentBuilder","version":"0.0.1"}`.
 
 > Note: alembic upgrade with sqlite+aiosqlite for the empty baseline migration is a no-op and should succeed silently.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/Dockerfile backend/.dockerignore
@@ -948,7 +948,7 @@ git commit -m "build(backend): add multi-stage-friendly Dockerfile"
 
 > **Why manual instead of `create-next-app`:** create-next-app makes interactive choices and writes files we don't want (default README, eslint config we'd replace). Manually keeps the diff small and reviewable.
 
-- [ ] **Step 1: Write `frontend/package.json`**
+- [x] **Step 1: Write `frontend/package.json`**
 
 ```json
 {
@@ -975,7 +975,7 @@ git commit -m "build(backend): add multi-stage-friendly Dockerfile"
 }
 ```
 
-- [ ] **Step 2: Write `frontend/tsconfig.json`**
+- [x] **Step 2: Write `frontend/tsconfig.json`**
 
 ```json
 {
@@ -1003,7 +1003,7 @@ git commit -m "build(backend): add multi-stage-friendly Dockerfile"
 }
 ```
 
-- [ ] **Step 3: Write `frontend/next.config.mjs`**
+- [x] **Step 3: Write `frontend/next.config.mjs`**
 
 ```javascript
 /** @type {import('next').NextConfig} */
@@ -1015,7 +1015,7 @@ const nextConfig = {
 export default nextConfig;
 ```
 
-- [ ] **Step 4: Write `frontend/app/layout.tsx`**
+- [x] **Step 4: Write `frontend/app/layout.tsx`**
 
 ```tsx
 import type { Metadata } from 'next';
@@ -1035,7 +1035,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 }
 ```
 
-- [ ] **Step 5: Write a placeholder `frontend/app/page.tsx`**
+- [x] **Step 5: Write a placeholder `frontend/app/page.tsx`**
 
 ```tsx
 export default function HomePage() {
@@ -1048,7 +1048,7 @@ export default function HomePage() {
 }
 ```
 
-- [ ] **Step 6: Install and verify build**
+- [x] **Step 6: Install and verify build**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder/frontend
@@ -1058,7 +1058,7 @@ npm run build
 
 Expected: ends with `Compiled successfully` and prints route table including `/`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder
@@ -1079,7 +1079,7 @@ git commit -m "feat(frontend): scaffold Next.js 15 app with TypeScript"
 
 > **Scope note:** This task wires the Clay color palette (from DESIGN.md §2) and warm cream background only. Roobert font, OpenType stylistic sets, custom animations, and the full type scale are deferred to M3 when we build real UI.
 
-- [ ] **Step 1: Install Tailwind**
+- [x] **Step 1: Install Tailwind**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder/frontend
@@ -1088,7 +1088,7 @@ npm install -D tailwindcss@3.4.17 postcss@8.4.49 autoprefixer@10.4.20
 
 Expected: `tailwindcss@3.4.17` added.
 
-- [ ] **Step 2: Write `frontend/postcss.config.mjs`**
+- [x] **Step 2: Write `frontend/postcss.config.mjs`**
 
 ```javascript
 export default {
@@ -1099,7 +1099,7 @@ export default {
 };
 ```
 
-- [ ] **Step 3: Write `frontend/tailwind.config.ts` with Clay tokens**
+- [x] **Step 3: Write `frontend/tailwind.config.ts` with Clay tokens**
 
 ```typescript
 import type { Config } from 'tailwindcss';
@@ -1163,7 +1163,7 @@ const config: Config = {
 export default config;
 ```
 
-- [ ] **Step 4: Write `frontend/app/globals.css`**
+- [x] **Step 4: Write `frontend/app/globals.css`**
 
 ```css
 @tailwind base;
@@ -1178,7 +1178,7 @@ body {
 }
 ```
 
-- [ ] **Step 5: Update `frontend/app/layout.tsx` to import globals.css**
+- [x] **Step 5: Update `frontend/app/layout.tsx` to import globals.css**
 
 Replace the file contents with:
 
@@ -1201,7 +1201,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 }
 ```
 
-- [ ] **Step 6: Verify build still works**
+- [x] **Step 6: Verify build still works**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder/frontend
@@ -1210,7 +1210,7 @@ npm run build
 
 Expected: `Compiled successfully`. No Tailwind class warnings.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder
@@ -1226,7 +1226,7 @@ git commit -m "feat(frontend): add Tailwind CSS with Clay color tokens"
 - Create: `frontend/lib/api.ts`
 - Modify: `frontend/app/page.tsx`
 
-- [ ] **Step 1: Write `frontend/lib/api.ts`**
+- [x] **Step 1: Write `frontend/lib/api.ts`**
 
 ```typescript
 const RAW_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
@@ -1247,7 +1247,7 @@ export async function fetchHealth(): Promise<HealthResponse> {
 }
 ```
 
-- [ ] **Step 2: Update `frontend/app/page.tsx` to call the backend**
+- [x] **Step 2: Update `frontend/app/page.tsx` to call the backend**
 
 ```tsx
 import { fetchHealth } from '@/lib/api';
@@ -1296,7 +1296,7 @@ export default async function HomePage() {
 }
 ```
 
-- [ ] **Step 3: Verify the build picks up the new page**
+- [x] **Step 3: Verify the build picks up the new page**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder/frontend
@@ -1305,7 +1305,7 @@ npm run build
 
 Expected: `Compiled successfully`. `/` listed as a dynamic route.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder
@@ -1321,7 +1321,7 @@ git commit -m "feat(frontend): add API client and wire home page to /health"
 - Create: `frontend/Dockerfile`
 - Create: `frontend/.dockerignore`
 
-- [ ] **Step 1: Write `frontend/.dockerignore`**
+- [x] **Step 1: Write `frontend/.dockerignore`**
 
 ```
 node_modules
@@ -1333,7 +1333,7 @@ Dockerfile
 .dockerignore
 ```
 
-- [ ] **Step 2: Write `frontend/Dockerfile`**
+- [x] **Step 2: Write `frontend/Dockerfile`**
 
 ```dockerfile
 # ---------- deps ----------
@@ -1368,7 +1368,7 @@ CMD ["node", "server.js"]
 
 > If the `public` copy line above causes a build error because `public/` doesn't exist, remove it. Next 15 standalone build does not require a `public/` directory.
 
-- [ ] **Step 3: Build the image**
+- [x] **Step 3: Build the image**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder
@@ -1377,7 +1377,7 @@ docker build -t agentbuilder-web:dev frontend/
 
 Expected: ends with `Successfully tagged agentbuilder-web:dev`. If the public copy line errors, edit it out and rebuild.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add frontend/Dockerfile frontend/.dockerignore
@@ -1391,7 +1391,7 @@ git commit -m "build(frontend): add multi-stage Dockerfile with standalone outpu
 **Files:**
 - Create: `docker-compose.yml`
 
-- [ ] **Step 1: Write `docker-compose.yml`**
+- [x] **Step 1: Write `docker-compose.yml`**
 
 ```yaml
 services:
@@ -1469,7 +1469,7 @@ volumes:
 
 > **Note on `NEXT_PUBLIC_API_URL=http://api:8000`:** This works because `app/page.tsx` runs on the server (it's a Server Component with `dynamic = 'force-dynamic'`), so it resolves the Docker network hostname `api`. M3 will introduce client-side fetches and we'll add a separate browser-facing URL then.
 
-- [ ] **Step 2: Validate the compose file syntax**
+- [x] **Step 2: Validate the compose file syntax**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder
@@ -1478,7 +1478,7 @@ docker compose config > /dev/null
 
 Expected: no output and exit code 0. Any output is an error to fix.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docker-compose.yml
@@ -1492,7 +1492,7 @@ git commit -m "build: add 4-service docker-compose (postgres, qdrant, api, web)"
 **Files:**
 - Create: `.env.example`
 
-- [ ] **Step 1: Write `.env.example`**
+- [x] **Step 1: Write `.env.example`**
 
 ```env
 # ---- Postgres ----
@@ -1515,7 +1515,7 @@ OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add .env.example
@@ -1528,7 +1528,7 @@ git commit -m "docs: add .env.example with all M0 variables"
 
 **Files:** none (operational verification + commit of any fixes if needed)
 
-- [ ] **Step 1: Bring the stack up**
+- [x] **Step 1: Bring the stack up**
 
 ```bash
 cd /DATA3/users/mj/AgentBuilder
@@ -1538,7 +1538,7 @@ docker compose up -d --build
 
 Expected: 4 containers start. May take 2–5 minutes for first build.
 
-- [ ] **Step 2: Wait for health and check**
+- [x] **Step 2: Wait for health and check**
 
 ```bash
 docker compose ps
@@ -1546,7 +1546,7 @@ docker compose ps
 
 Expected: postgres and qdrant show `(healthy)`, api shows `(healthy)`, web shows `Up`. If api is `(unhealthy)` after 60s, jump to Step 6.
 
-- [ ] **Step 3: Hit the API directly**
+- [x] **Step 3: Hit the API directly**
 
 ```bash
 curl -sS http://localhost:8000/health
@@ -1554,7 +1554,7 @@ curl -sS http://localhost:8000/health
 
 Expected: `{"status":"ok","app":"AgentBuilder","version":"0.0.1"}`.
 
-- [ ] **Step 4: Hit the web page**
+- [x] **Step 4: Hit the web page**
 
 ```bash
 curl -sS http://localhost:3000/ | grep -E "AgentBuilder|ok"
@@ -1562,7 +1562,7 @@ curl -sS http://localhost:3000/ | grep -E "AgentBuilder|ok"
 
 Expected: HTML containing `AgentBuilder` and `ok` (the API status rendered into the page).
 
-- [ ] **Step 5: Check Postgres is reachable inside the api container**
+- [x] **Step 5: Check Postgres is reachable inside the api container**
 
 ```bash
 docker compose exec api python -c "import asyncio; from app.core.db import get_engine; from sqlalchemy import text;
@@ -1577,7 +1577,7 @@ asyncio.run(main())"
 
 Expected: `db says 1`.
 
-- [ ] **Step 6 (only if anything fails): Inspect logs**
+- [x] **Step 6 (only if anything fails): Inspect logs**
 
 ```bash
 docker compose logs api --tail 100
@@ -1593,7 +1593,7 @@ Common fixes:
 
 If a fix is needed, apply it, rebuild only the affected service (`docker compose build <service>` then `docker compose up -d <service>`), and re-run Steps 2–5.
 
-- [ ] **Step 7: Bring the stack down**
+- [x] **Step 7: Bring the stack down**
 
 ```bash
 docker compose down
@@ -1601,7 +1601,7 @@ docker compose down
 
 Expected: all 4 containers stopped and removed. Volumes preserved.
 
-- [ ] **Step 8: Commit any fixes**
+- [x] **Step 8: Commit any fixes**
 
 If Step 6 required edits, commit them now:
 
