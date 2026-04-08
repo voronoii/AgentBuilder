@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  background-color: #faf9f7; /* cream */
+  color: #000000;
+  -webkit-font-smoothing: antialiased;
+}
