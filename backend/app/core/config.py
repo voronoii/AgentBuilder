@@ -51,6 +51,19 @@ class Settings(BaseSettings):
     default_embedding_model_path: str = "/models/snowflake-arctic-embed-l-v2.0-ko"
     default_embedding_dim: int = 1024
 
+    # Uploads and ingestion
+    uploads_dir: str = "/app/uploads"
+    ingestion_max_concurrency: int = 2
+
+    # Qdrant
+    qdrant_collection_prefix: str = "kb_"
+
+    # CORS — JSON list in env, e.g. '["http://localhost:23000"]'
+    cors_origins: list[str] = [
+        "http://localhost:23000",
+        "http://localhost:3000",
+    ]
+
     # Optional API keys for chat providers (loaded if present)
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
