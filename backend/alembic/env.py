@@ -9,6 +9,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.core.config import get_settings
+from app.models import Base  # noqa: F401 — imported for autogenerate side effects
 
 config = context.config
 
@@ -18,9 +19,7 @@ if config.config_file_name is not None:
 # Inject DB URL from Settings (overrides empty alembic.ini value)
 config.set_main_option("sqlalchemy.url", get_settings().database_url)
 
-# M0: no models yet → metadata is None.
-# M1 will set: target_metadata = Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
