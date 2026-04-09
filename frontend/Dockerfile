@@ -10,8 +10,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ARG NEXT_PUBLIC_API_URL=http://localhost:28000
+ARG API_URL_INTERNAL=http://api:8000
 ENV NEXT_TELEMETRY_DISABLED=1 \
-    NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
+    API_URL_INTERNAL=${API_URL_INTERNAL}
 RUN npm run build
 
 # ---------- runtime ----------
