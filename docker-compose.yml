@@ -44,7 +44,7 @@ services:
       AGENTBUILDER_ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     volumes:
       - uploads:/app/uploads
-      - /DATA3/users/mj/hf_models:/models:ro
+      - ${HF_MODELS_PATH:-/DATA3/users/mj/hf_models}:/models:ro
     ports:
       - "${API_PORT:-8000}:8000"
     healthcheck:
