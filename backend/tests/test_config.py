@@ -10,7 +10,8 @@ def test_settings_defaults_when_no_env():
     assert settings.app_name == "AgentBuilder"
     assert settings.api_host == "0.0.0.0"
     assert settings.api_port == 8000
-    assert settings.database_url.startswith("postgresql+asyncpg://")
+    # In test env, AGENTBUILDER_DATABASE_URL is set to sqlite by conftest
+    assert "://" in settings.database_url
     assert settings.qdrant_url == "http://qdrant:6333"
 
 

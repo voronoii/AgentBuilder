@@ -3,10 +3,15 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+import logging
+
 from app.api.health import router as health_router
+from app.api.knowledge import router as knowledge_router
 from app.core.config import APP_VERSION, get_settings
 from app.core.errors import register_exception_handlers
 from app.core.request_id import RequestIdMiddleware
+
+_log = logging.getLogger(__name__)
 
 
 def create_app() -> FastAPI:
@@ -30,10 +35,37 @@ def create_app() -> FastAPI:
     register_exception_handlers(app)
 
     # Root routes only. API versioning is intentionally deferred — see
-    # docs/specs/2026-04-08-agentbuilder-design.md §11.1 for the restoration
-    # procedure (when external consumers, breaking changes, or multi-client
-    # support arrive).
+    # docs/specs/2026-04-08-agentbuilder-design.md §11.1
     app.include_router(health_router)
+    app.include_router(knowledge_router)
+
+    @app.on_event("startup")
+    async def _ensure_schema() -> None:
+        """Auto-create tables for sqlite (test mode). No-op for postgres."""
+        from app.core.db import get_engine
+        from app.models.base import Base
+
+        url = str(get_engine().url)
+        if url.startswith("sqlite"):
+            async with get_engine().begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+
+    @app.on_event("startup")
+    async def _startup_recovery() -> None:
+        """Mark stale processing documents as failed after restart."""
+        try:
+            from app.core.db import get_sessionmaker
+            from app.repositories.knowledge import KnowledgeRepository
+
+            async with get_sessionmaker()() as session:
+                changed = await KnowledgeRepository(session).mark_stale_processing_failed()
+                await session.commit()
+                if changed:
+                    _log.warning(
+                        "startup recovery: marked %d stale documents as failed", changed
+                    )
+        except Exception:  # noqa: BLE001
+            _log.warning("startup recovery skipped (db not available)")
 
     return app
 
