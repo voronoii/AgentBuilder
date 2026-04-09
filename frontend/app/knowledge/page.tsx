@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { KbList } from '@/components/knowledge/KbList';
-import { listKnowledgeBases } from '@/lib/knowledge';
+import { listKnowledgeBases, type KnowledgeBase } from '@/lib/knowledge';
 
 export const dynamic = 'force-dynamic';
 
 export default async function KnowledgePage() {
-  let kbs;
+  let kbs: KnowledgeBase[] = [];
   try {
     kbs = await listKnowledgeBases();
   } catch {
