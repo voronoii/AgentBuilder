@@ -54,7 +54,7 @@
 - [x] **상태**: 해결됨
 - **문제**: `docker-compose.yml`에 `/DATA3/users/mj/hf_models` 절대 경로가 박혀 있어서 다른 머신·다른 사용자가 clone하면 깨짐.
 - **해결책**: 환경변수로 교체 `${HF_MODELS_PATH:-/DATA3/users/mj/hf_models}:/models:ro`, `.env.example`에 기본값 추가.
-- **해결 커밋**: `<fillme>`
+- **해결 커밋**: `fc0e1c4`
 
 ---
 
@@ -64,8 +64,8 @@
 - **문제**: M1 (파일 임베딩)과 M4 (워크플로우 실행)는 수초~수분짜리 백그라운드 작업 필요. 패턴 미정.
 - **결정**: **`asyncio.create_task()` + 프로세스 메모리 상태 + DB에 최종/중간 상태 저장**. 재시작 시 진행 중 작업 손실 수용. Celery/Redis/Temporal 등은 오버킬.
 - **이유**: 단일 사용자 MVP, 로컬 실행. 복잡도 대비 이익 없음. 향후 멀티 유저 시 재평가.
-- **스펙 반영**: §6.4 (임베딩 파이프라인), §8.1 (워크플로우 실행 엔진)에 명시
-- **해결 커밋**: `<fillme>`
+- **스펙 반영**: §6.6 (ingestion 실행 모델), §8.7 (워크플로우 실행 모델)에 명시
+- **해결 커밋**: `417028c`
 
 ---
 
@@ -107,8 +107,8 @@
   - `app/core/errors.py`에 `AppError(HTTPException)` 베이스 클래스와 코드 enum
   - Global exception handler가 envelope로 직렬화
   - `request_id`는 middleware가 header에서 읽거나 생성
-- **스펙 반영**: §11 (시스템 아키텍처) 보조 섹션으로 추가
-- **해결 커밋**: `<fillme>`
+- **스펙 반영**: §11.2 (에러 응답 표준)으로 추가
+- **해결 커밋**: `417028c`
 
 ---
 
@@ -133,15 +133,16 @@
 
 - [x] **상태**: 해결됨
 - **문제**: `pyproject.toml`, `app/main.py`, `app/api/health.py` 세 곳에 `0.0.1` 중복.
-- **해결책**: `importlib.metadata.version("agentbuilder-backend")`로 통합.
-- **해결 커밋**: `<fillme>`
+- **해결책**: `importlib.metadata.version("agentbuilder-backend")`로 `app/core/config.py`의 `APP_VERSION`에 통합. Fallback `"0.0.0"` (uninstalled case).
+- **해결 커밋**: `bd3dd1c`
 
 ### 3. `/api/v1/health` 이중 마운트 제거
 
 - [x] **상태**: 해결됨
 - **문제**: `/health`와 `/api/v1/health` 동시 마운트는 MVP 단계에서 혼란만 줌.
 - **결정**: **루트 라우트만 사용** (`/health`, 향후 `/workflows`, `/knowledge`, `/mcp`). API 버저닝은 당분간 없음.
-- **해결 커밋**: `<fillme>`
+- **해결 커밋**: `bd3dd1c`
+- **리그레션 가드**: `test_api_v1_prefix_not_mounted` 테스트가 `/api/v1/health` 404를 assert — 실수로 다시 마운트되면 CI가 잡음
 
 ### 📌 API 버저닝 리마인더
 
