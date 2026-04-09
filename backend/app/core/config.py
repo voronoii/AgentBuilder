@@ -1,6 +1,23 @@
 from __future__ import annotations
 
+from importlib.metadata import PackageNotFoundError, version as _pkg_version
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _resolve_app_version() -> str:
+    """Single source of truth — read version from pyproject.toml via installed metadata.
+
+    Falls back to "0.0.0" when the package is not installed (e.g. running tests
+    from a fresh checkout without `pip install -e .`).
+    """
+    try:
+        return _pkg_version("agentbuilder-backend")
+    except PackageNotFoundError:
+        return "0.0.0"
+
+
+APP_VERSION: str = _resolve_app_version()
 
 
 class Settings(BaseSettings):

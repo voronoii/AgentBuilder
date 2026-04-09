@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.core.config import Settings
+from app.core.config import APP_VERSION, Settings
 
 
 def test_settings_defaults_when_no_env():
@@ -31,3 +31,12 @@ def test_settings_default_embedding_path():
     assert settings.default_embedding_model_path == (
         "/models/snowflake-arctic-embed-l-v2.0-ko"
     )
+
+
+def test_app_version_resolved_from_metadata():
+    """APP_VERSION is read from installed package metadata (pyproject.toml)."""
+    # When running tests in an editable install, version should match pyproject
+    assert APP_VERSION
+    assert APP_VERSION != "0.0.0"  # fallback only fires if package missing
+    # Semantic version shape: at least one dot
+    assert "." in APP_VERSION

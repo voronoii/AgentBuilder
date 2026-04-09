@@ -3,22 +3,22 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from app.api.health import router as health_router
-from app.core.config import get_settings
+from app.core.config import APP_VERSION, get_settings
 
 
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
         title=settings.app_name,
-        version="0.0.1",
+        version=APP_VERSION,
         debug=settings.debug,
     )
 
-    # Top-level health (load balancers, docker healthchecks)
+    # Root routes only. API versioning is intentionally deferred — see
+    # docs/specs/2026-04-08-agentbuilder-design.md §11.1 for the restoration
+    # procedure (when external consumers, breaking changes, or multi-client
+    # support arrive).
     app.include_router(health_router)
-
-    # Versioned API surface — every future router lives under /api/v1
-    app.include_router(health_router, prefix="/api/v1")
 
     return app
 

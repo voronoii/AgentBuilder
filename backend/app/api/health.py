@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
-from app.core.config import Settings, get_settings
+from app.core.config import APP_VERSION, Settings, get_settings
 
 router = APIRouter(tags=["health"])
-
-APP_VERSION = "0.0.1"
 
 
 @router.get("/health")

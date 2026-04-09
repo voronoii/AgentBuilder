@@ -21,9 +21,11 @@ async def test_health_returns_ok(client: AsyncClient):
     assert body["status"] == "ok"
     assert body["app"] == "AgentBuilder"
     assert "version" in body
+    # Version should come from package metadata, not a hardcoded string
+    assert body["version"] != ""
 
 
-async def test_health_under_api_v1_prefix(client: AsyncClient):
+async def test_api_v1_prefix_not_mounted(client: AsyncClient):
+    """API versioning is intentionally deferred — see spec §11.1."""
     resp = await client.get("/api/v1/health")
-    assert resp.status_code == 200
-    assert resp.json()["status"] == "ok"
+    assert resp.status_code == 404
