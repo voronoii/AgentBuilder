@@ -44,7 +44,13 @@ class QdrantStore:
         ]
         await self._run(self._client.upsert, collection_name=name, points=qpoints)
 
+    async def _collection_exists(self, name: str) -> bool:
+        collections = await self._run(self._client.get_collections)
+        return any(c.name == name for c in collections.collections)
+
     async def delete_by_document(self, name: str, *, document_id: str) -> None:
+        if not await self._collection_exists(name):
+            return
         await self._run(
             self._client.delete,
             collection_name=name,
@@ -56,6 +62,11 @@ class QdrantStore:
                 )
             ),
         )
+
+    async def ensure_collection(self, name: str, *, dimension: int) -> None:
+        """컬렉션이 없으면 생성, 있으면 그대로 둔다."""
+        if not await self._collection_exists(name):
+            await self.create_collection(name, dimension=dimension)
 
     async def search(
         self, name: str, *, query: list[float], top_k: int = 5, score_threshold: float | None = None

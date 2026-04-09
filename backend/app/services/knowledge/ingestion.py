@@ -21,6 +21,8 @@ class _Store(Protocol):
 
     async def delete_by_document(self, name: str, *, document_id: str) -> None: ...
 
+    async def ensure_collection(self, name: str, *, dimension: int) -> None: ...
+
 
 ProgressFn = Callable[[int, int], None]
 
@@ -57,6 +59,7 @@ async def run_ingestion(ctx: IngestionContext) -> int:
         ctx.on_progress(0, 0)
         return 0
 
+    await ctx.store.ensure_collection(ctx.collection_name, dimension=ctx.embedder.dimension)
     await ctx.store.delete_by_document(ctx.collection_name, document_id=str(ctx.document_id))
 
     done = 0

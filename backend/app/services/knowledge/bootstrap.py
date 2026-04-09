@@ -25,6 +25,8 @@ class _NoopStore:
 
     async def delete_by_document(self, *a: Any, **kw: Any) -> None: ...
 
+    async def ensure_collection(self, *a: Any, **kw: Any) -> None: ...
+
     async def search(self, *a: Any, **kw: Any) -> list[dict[str, Any]]:
         return []
 
