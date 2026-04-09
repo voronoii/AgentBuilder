@@ -328,6 +328,18 @@ class EmbeddingProvider(Protocol):
 - Top K + score threshold
 - Phase 2 후보: hybrid search (BM25 + dense), reranker
 
+### 6.6 Ingestion 실행 모델 (장기 작업 패턴)
+> 공통 원칙은 §8.7과 동일. 여기서는 지식베이스 한정.
+
+- **패턴**: `asyncio.create_task()` 로 파이프라인 태스크를 백그라운드 실행
+- **진행 상태**:
+  - DB `Document.status` (`pending → processing → done | failed`) + `error` 필드
+  - 프로세스 메모리에 per-document 진행률 캐시 (bytes processed / chunks embedded)
+- **프론트엔드 스트리밍**: SSE로 진행률 push (`/knowledge/{kb_id}/ingestion/stream`)
+- **재시작 복구**: 서버 재시작 시 `processing` 상태였던 문서는 **`failed`로 변경**하고 UI에 "다시 시도" 버튼 표시 (재시도는 idempotent — 해당 문서의 기존 청크를 지우고 재임베딩)
+- **동시성 제한**: 단일 사용자 MVP → 동일 지식베이스 내 최대 N개 문서 동시 임베딩 (기본 2). GPU 메모리 보호용. `asyncio.Semaphore`로 제한
+- **비선택**: Celery/Redis/RQ는 오버킬 (복잡도 vs 이익 비율 나쁨). 멀티 유저 시 재평가
+
 ### 6.6 Knowledge Base 데이터 모델
 ```python
 class KnowledgeBase:
@@ -469,6 +481,18 @@ class RunEvent:
     payload: dict
 ```
 
+### 8.7 실행 모델 (장기 작업 패턴)
+
+단일 사용자 MVP — 외부 task queue(Celery/RQ/Redis/Temporal) **사용 안 함**.
+
+- **실행 트리거**: `POST /workflows/{id}/runs`가 `WorkflowRun` 레코드를 `running`으로 생성 후, `asyncio.create_task()`로 LangGraph 실행을 백그라운드 시작하고 즉시 `run_id` 반환
+- **이벤트 스트리밍**: `GET /runs/{run_id}/events` SSE 엔드포인트가 프로세스 메모리의 asyncio Queue를 구독. LangGraph `astream_events()` → Queue로 push → SSE로 relay
+- **영속화**: 모든 `RunEvent`는 동시에 Postgres에 저장 (과거 실행 조회용)
+- **취소**: `POST /runs/{run_id}/cancel` → 저장된 `asyncio.Task.cancel()` 호출, `status=cancelled`
+- **동시성**: 글로벌 `asyncio.Semaphore(N)` (기본 N=3) — 동시 실행 워크플로우 수 제한 (GPU/API rate limit 보호)
+- **재시작 복구**: 서버 재시작 시 `running` 상태 run은 모두 **`failed`로 마크**하고 에러에 "server restart" 기록. 자동 재시도 ❌
+- **프로세스 로컬 상태**: `dict[run_id, (asyncio.Task, asyncio.Queue)]` — 단일 프로세스 가정. 향후 워커 멀티프로세스 시 Redis pub/sub 등으로 교체 (Phase 2+)
+
 ---
 
 ## 9. 테스트/플레이그라운드
@@ -548,6 +572,50 @@ class RunEvent:
    │ (vectors)│  │ (metadata│    │ Servers      │
    └──────────┘  └──────────┘    └──────────────┘
 ```
+
+### 11.1 API 네임스페이스
+- **MVP**: **루트 라우트**만 사용 (`/health`, `/workflows`, `/knowledge`, `/mcp`, `/runs` 등)
+- **버저닝 없음** — 외부 사용자·통합자가 생기기 전까지 단순 유지
+- **복원 절차** (언젠가 필요 시):
+  1. `app/main.py`에 `api_v1 = APIRouter(prefix="/api/v1")` 추가하고 기존 라우터들 이동
+  2. Breaking change는 `/api/v2`에서 시작
+  3. 프론트 `lib/api.ts`에 버전 상수 도입
+- **마이그레이션 트리거**: (a) 외부 사용자·통합자, (b) breaking change 불가피, (c) 멀티 클라이언트 (모바일/CLI)
+
+### 11.2 에러 응답 표준
+모든 API 에러는 일관된 JSON envelope로 응답.
+
+```json
+{
+  "detail": "human-readable message",
+  "code": "KNOWLEDGE_NOT_FOUND",
+  "request_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+- `detail`: 사용자/개발자가 읽는 설명 (영어 기본, 추후 i18n 가능)
+- `code`: 기계 친화 에러 코드 (`SCREAMING_SNAKE_CASE`). 프론트 분기 로직용
+- `request_id`: 미들웨어가 생성·주입. 응답 헤더 `X-Request-ID`에도 동일 값
+
+**구현**:
+- `app/core/errors.py`에 `AppError(HTTPException)` 베이스 + 코드 enum (도메인별)
+- 글로벌 exception handler가 envelope로 직렬화
+- 422 validation 에러(FastAPI 기본)는 handler가 envelope로 재포장
+- Request ID 미들웨어: 헤더 `X-Request-ID`가 있으면 사용, 없으면 UUID 생성
+
+**에러 코드 네임스페이스 예시**:
+- `KNOWLEDGE_*` — 지식베이스 관련
+- `WORKFLOW_*` — 워크플로우/실행 관련
+- `MCP_*` — 도구 관련
+- `VALIDATION_*` — 입력 검증 실패
+- `INTERNAL_*` — 서버 내부 에러
+
+### 11.3 CORS & 브라우저/서버 URL 이원화
+> M3 (캔버스 프론트)에서 클라이언트 사이드 fetch 등장 시 필수. M0/M1/M2는 Server Component만 사용하므로 우선순위 낮음.
+
+- **CORS**: `FastAPI CORSMiddleware` + `Settings.cors_origins: list[str]`. `.env`에서 JSON 리스트로 관리.
+- **URL 이원화**: 브라우저는 호스트 매핑된 `http://localhost:${API_PORT}`, 서버 컴포넌트는 컨테이너 네트워크 `http://api:8000`. `lib/api.ts`에서 `typeof window === 'undefined'`로 분기.
+- **Next.js env 주의**: `NEXT_PUBLIC_*`은 **빌드 타임**에 번들에 박힘 → `web` Dockerfile의 build stage에 `ARG`로 주입하거나 docker-compose `build.args`로 전달.
 
 ---
 
@@ -725,6 +793,10 @@ volumes:
 | 10 | deepagents 패키지 활용 가능성 | Phase 2 "Deep Agent" 노드로 검토 |
 | 11 | 워크플로우 export/import 포맷 | JSON 표준화 |
 | 12 | i18n 정책 | UI 한국어 우선? 영어 동시? |
+| 13 | **API 버저닝 복원 시점** | 현재 루트 라우트만. 외부 사용자·breaking change·멀티 클라이언트 등장 시 `/api/v1` 도입 (§11.1 복원 절차) |
+| 14 | **로깅 전략** | M4 전 결정. 후보: `loguru` (추천) / `structlog` / stdlib `logging`. JSON sink로 파일 + stdout |
+| 15 | **CORS origins 관리 방식** | env var JSON 리스트 → Settings. Prod에서 와일드카드 금지 (§11.3) |
+| 16 | **에러 코드 enum 구체화** | `app/core/errors.py`에 도메인별 코드 정의. M1 첫 엔드포인트 작성 시 착수 |
 
 ---
 
@@ -748,6 +820,12 @@ volumes:
 | 2026-04-08 | 로컬 모델 없으면 fastembed로 fallback | graceful degradation |
 | 2026-04-08 | Anthropic은 embedding 미지원 (chat-only) | first-party 임베딩 API 없음 — Provider 추상화에서 제외 |
 | 2026-04-08 | ChatProvider / EmbeddingProvider 별도 Protocol | Anthropic 부재를 타입으로 표현 |
+| 2026-04-09 | API 루트 라우트만 사용 (버저닝 없음) | 단일 사용자 MVP, 외부 사용자 없음. 복원 절차는 §11.1에 기록 |
+| 2026-04-09 | 에러 응답 표준 envelope (`detail`, `code`, `request_id`) | 프론트 분기 로직 일관성, 디버깅 편의 |
+| 2026-04-09 | 장기 작업 패턴: `asyncio.create_task` + 프로세스 메모리 상태 + DB 영속화 | 단일 사용자 MVP. Celery/Redis/Temporal 오버킬. 재시작 시 `running`→`failed` 마크 |
+| 2026-04-09 | HF_MODELS_PATH 환경변수화 | 호스트 경로 하드코딩 제거, 포터빌리티 |
+| 2026-04-09 | 버전 문자열 단일 소스 (`pyproject.toml` → `importlib.metadata`) | drift 제거 |
+| 2026-04-09 | CORS / 브라우저·서버 URL 이원화 정책 명시 | M3에서 발견하면 반나절 까먹는 함정. 지금 기록 |
 
 ---
 
