@@ -47,9 +47,7 @@ def _envelope(
 
 
 def _request_id_of(request: Request) -> str:
-    return getattr(request.state, "request_id", "") or request.headers.get(
-        "x-request-id", ""
-    )
+    return getattr(request.state, "request_id", "") or request.headers.get("x-request-id", "")
 
 
 def register_exception_handlers(app: FastAPI) -> None:
@@ -68,9 +66,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(RequestValidationError)
-    async def _validation(
-        request: Request, exc: RequestValidationError
-    ) -> JSONResponse:
+    async def _validation(request: Request, exc: RequestValidationError) -> JSONResponse:
         rid = _request_id_of(request)
         return JSONResponse(
             status_code=422,

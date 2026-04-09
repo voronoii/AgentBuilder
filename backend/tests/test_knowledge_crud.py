@@ -20,9 +20,7 @@ async def _setup_app():
 @pytest.mark.asyncio
 async def test_create_list_get_delete_kb() -> None:
     app = await _setup_app()
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://t"
-    ) as c:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as c:
         r = await c.post(
             "/knowledge",
             json={

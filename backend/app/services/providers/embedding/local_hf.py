@@ -1,18 +1,23 @@
 from __future__ import annotations
+
 import asyncio
 import logging
+
 from langchain_huggingface import HuggingFaceEmbeddings
 
 _log = logging.getLogger(__name__)
 
+
 def _detect_device() -> str:
     try:
         import torch
+
         if torch.cuda.is_available():
             return "cuda"
     except Exception:
         pass
     return "cpu"
+
 
 class LocalHfProvider:
     def __init__(self, model_path: str, device: str | None = None) -> None:

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-import logging
 
 from app.api.health import router as health_router
 from app.api.knowledge import router as knowledge_router
@@ -61,9 +61,7 @@ def create_app() -> FastAPI:
                 changed = await KnowledgeRepository(session).mark_stale_processing_failed()
                 await session.commit()
                 if changed:
-                    _log.warning(
-                        "startup recovery: marked %d stale documents as failed", changed
-                    )
+                    _log.warning("startup recovery: marked %d stale documents as failed", changed)
         except Exception:  # noqa: BLE001
             _log.warning("startup recovery skipped (db not available)")
 

@@ -28,12 +28,8 @@ class ProgressEvent:
 
 @dataclass
 class _Bus:
-    _subscribers: dict[uuid.UUID, list[asyncio.Queue[ProgressEvent]]] = field(
-        default_factory=dict
-    )
-    _latest: dict[uuid.UUID, dict[uuid.UUID, ProgressEvent]] = field(
-        default_factory=dict
-    )
+    _subscribers: dict[uuid.UUID, list[asyncio.Queue[ProgressEvent]]] = field(default_factory=dict)
+    _latest: dict[uuid.UUID, dict[uuid.UUID, ProgressEvent]] = field(default_factory=dict)
     _lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
     async def publish(self, event: ProgressEvent) -> None:

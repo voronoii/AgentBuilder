@@ -178,9 +178,7 @@ async def search_kb(
     if kb.embedding_provider == "local_hf":
         embedder = get_embedding_provider("local_hf", model_path=kb.embedding_model)
     else:
-        embedder = get_embedding_provider(
-            kb.embedding_provider, model_name=kb.embedding_model
-        )
+        embedder = get_embedding_provider(kb.embedding_provider, model_name=kb.embedding_model)
 
     vectors = await embedder.embed_texts([payload.query])
     hits_raw = await get_store().search(

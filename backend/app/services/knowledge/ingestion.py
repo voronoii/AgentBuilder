@@ -57,9 +57,7 @@ async def run_ingestion(ctx: IngestionContext) -> int:
         ctx.on_progress(0, 0)
         return 0
 
-    await ctx.store.delete_by_document(
-        ctx.collection_name, document_id=str(ctx.document_id)
-    )
+    await ctx.store.delete_by_document(ctx.collection_name, document_id=str(ctx.document_id))
 
     done = 0
     for start in range(0, total, ctx.batch_size):

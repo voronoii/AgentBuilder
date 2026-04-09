@@ -17,6 +17,4 @@ def _read_with_fallback(path: Path) -> str:
 class TextParser:
     async def parse(self, path: Path) -> ParsedDocument:
         text = _read_with_fallback(path)
-        return ParsedDocument(
-            text=text, metadata={"char_count": len(text), "filename": path.name}
-        )
+        return ParsedDocument(text=text, metadata={"char_count": len(text), "filename": path.name})

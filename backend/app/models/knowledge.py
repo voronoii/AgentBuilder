@@ -7,12 +7,14 @@ from datetime import datetime
 from sqlalchemy import (
     BigInteger,
     DateTime,
-    Enum as SaEnum,
     ForeignKey,
     Integer,
     String,
     Text,
     func,
+)
+from sqlalchemy import (
+    Enum as SaEnum,
 )
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -40,9 +42,7 @@ class KnowledgeBase(Base):
     embedding_model: Mapped[str] = mapped_column(String(500), nullable=False)
     embedding_dim: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    qdrant_collection: Mapped[str] = mapped_column(
-        String(200), nullable=False, unique=True
-    )
+    qdrant_collection: Mapped[str] = mapped_column(String(200), nullable=False, unique=True)
 
     chunk_size: Mapped[int] = mapped_column(Integer, default=1000, nullable=False)
     chunk_overlap: Mapped[int] = mapped_column(Integer, default=200, nullable=False)
@@ -57,7 +57,7 @@ class KnowledgeBase(Base):
         nullable=False,
     )
 
-    documents: Mapped[list["Document"]] = relationship(
+    documents: Mapped[list[Document]] = relationship(
         back_populates="knowledge_base",
         cascade="all, delete-orphan",
         lazy="selectin",
@@ -82,7 +82,9 @@ class Document(Base):
     storage_path: Mapped[str] = mapped_column(String(1000), nullable=False)
 
     status: Mapped[DocumentStatus] = mapped_column(
-        SaEnum(DocumentStatus, name="document_status", values_callable=lambda e: [x.value for x in e]),
+        SaEnum(
+            DocumentStatus, name="document_status", values_callable=lambda e: [x.value for x in e]
+        ),
         default=DocumentStatus.PENDING,
         nullable=False,
         index=True,

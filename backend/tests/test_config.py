@@ -29,9 +29,7 @@ def test_settings_reads_env_vars(monkeypatch: pytest.MonkeyPatch):
 def test_settings_default_embedding_path():
     settings = Settings()
     assert settings.default_embedding_provider == "local_hf"
-    assert settings.default_embedding_model_path == (
-        "/models/snowflake-arctic-embed-l-v2.0-ko"
-    )
+    assert settings.default_embedding_model_path == ("/models/snowflake-arctic-embed-l-v2.0-ko")
 
 
 def test_app_version_resolved_from_metadata():

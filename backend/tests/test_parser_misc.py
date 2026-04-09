@@ -26,7 +26,7 @@ async def test_eml_parser(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_epub_parser_reads_chapters(tmp_path: Path) -> None:
-    ebooklib = pytest.importorskip("ebooklib")
+    pytest.importorskip("ebooklib")
     from ebooklib import epub
 
     book = epub.EpubBook()

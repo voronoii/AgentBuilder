@@ -37,9 +37,7 @@ class _FakeStore:
 
 class _FakeParser:
     async def parse(self, path: Path) -> ParsedDocument:
-        return ParsedDocument(
-            text="hello world " * 50, metadata={"filename": path.name}
-        )
+        return ParsedDocument(text="hello world " * 50, metadata={"filename": path.name})
 
 
 @pytest.mark.asyncio

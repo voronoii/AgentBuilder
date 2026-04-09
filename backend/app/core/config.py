@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from importlib.metadata import PackageNotFoundError, version as _pkg_version
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _pkg_version
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -39,9 +40,7 @@ class Settings(BaseSettings):
     api_port: int = 8000
 
     # Database
-    database_url: str = (
-        "postgresql+asyncpg://agentbuilder:agentbuilder@postgres:5432/agentbuilder"
-    )
+    database_url: str = "postgresql+asyncpg://agentbuilder:agentbuilder@postgres:5432/agentbuilder"
 
     # Vector DB
     qdrant_url: str = "http://qdrant:6333"

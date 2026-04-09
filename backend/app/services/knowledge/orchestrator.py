@@ -129,9 +129,7 @@ class IngestionOrchestrator:
         try:
             async with self._sessionmaker() as session:
                 repo = KnowledgeRepository(session)
-                await repo.set_document_status(
-                    document_id, status=DocumentStatus.FAILED, error=msg
-                )
+                await repo.set_document_status(document_id, status=DocumentStatus.FAILED, error=msg)
         except Exception:  # noqa: BLE001
             _log.exception("failed to record failure for %s", document_id)
         await progress_bus.publish(

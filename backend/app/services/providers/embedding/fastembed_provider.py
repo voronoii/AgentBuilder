@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 import asyncio
+
 from fastembed import TextEmbedding
+
 
 class FastembedProvider:
     def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5") -> None:

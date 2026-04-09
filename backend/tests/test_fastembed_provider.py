@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 import pytest
+
 from app.services.providers.embedding.fastembed_provider import FastembedProvider
+
 
 @pytest.mark.asyncio
 async def test_fastembed_embeds_and_reports_dim() -> None:
