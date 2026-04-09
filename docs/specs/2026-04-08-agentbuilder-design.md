@@ -799,6 +799,7 @@ volumes:
 | 14 | **로깅 전략** | M4 전 결정. 후보: `loguru` (추천) / `structlog` / stdlib `logging`. JSON sink로 파일 + stdout |
 | 15 | **CORS origins 관리 방식** | env var JSON 리스트 → Settings. Prod에서 와일드카드 금지 (§11.3) |
 | 16 | **에러 코드 enum 구체화** | `app/core/errors.py`에 도메인별 코드 정의. M1 첫 엔드포인트 작성 시 착수 |
+| 17 | **Dockerfile `ARG` 규칙** | `NEXT_PUBLIC_*` 변수는 Next.js 빌드 타임에 번들에 박힘. `frontend/Dockerfile` build 스테이지에 `ARG <VAR>` + `ENV <VAR>=${<VAR>}` 선언 필수. 새 환경변수 추가 시 마다 체크 (M1 실사용 테스트에서 발견) |
 
 ---
 

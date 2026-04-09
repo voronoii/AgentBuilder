@@ -70,6 +70,18 @@
 
 ---
 
+## 실사용 테스트 후 발견 버그 (2026-04-09)
+
+| 커밋 | 버그 | 원인 | 수정 |
+|------|------|------|------|
+| `ecb0495` | TS 빌드 실패 — `kbs` 변수 암시적 `any[]` | `let kbs;` 선언에 타입 누락 | `let kbs: KnowledgeBase[] = []` |
+| `3e09d63` | "새 지식베이스" 버튼·테두리·배경 미표시 | `clay-accent` 등 semantic 토큰이 Tailwind config에 미등록 | `tailwind.config.ts`에 `clay-accent/border/surface/text` 추가 |
+| `5f5126c` | KB 생성 시 "failed to fetch" | `frontend/Dockerfile` build 스테이지에 `ARG NEXT_PUBLIC_API_URL` 선언 누락 → 번들에 `undefined` 박힘 | `ARG` + `ENV` 추가 |
+
+> **M2~M5 체크 포인트**: 새 `NEXT_PUBLIC_*` 환경변수 추가 시 반드시 `frontend/Dockerfile` build 스테이지에도 `ARG` + `ENV` 선언 추가할 것.
+
+---
+
 ## 알려진 제한사항 및 M2 고려사항
 
 | 항목 | 상태 | 비고 |
