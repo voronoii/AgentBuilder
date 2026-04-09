@@ -725,25 +725,27 @@ volumes:
 
 > 각 항목은 별도 implementation plan에서 세분화. 여기서는 큰 그림만.
 
-### Milestone 0 — Foundation (인프라)
-- [ ] Docker Compose 4-service 구성 (postgres, qdrant, api, web)
-- [ ] 백엔드 FastAPI skeleton + health endpoint
-- [ ] 프론트 Next.js skeleton + Clay 디자인 토큰 세팅
-- [ ] SQLAlchemy + Alembic 초기 마이그레이션
-- [ ] 환경 변수 / 설정 관리
+### Milestone 0 — Foundation (인프라) ✅ 완료 (2026-04-09)
+- [x] Docker Compose 4-service 구성 (postgres, qdrant, api, web)
+- [x] 백엔드 FastAPI skeleton + health endpoint
+- [x] 프론트 Next.js skeleton + Clay 디자인 토큰 세팅
+- [x] SQLAlchemy + Alembic 초기 마이그레이션
+- [x] 환경 변수 / 설정 관리
+> 상세: [`docs/plans/2026-04-08-milestone-0-foundation.md`](plans/2026-04-08-milestone-0-foundation.md) | 후속: [`docs/tracking/m0-followups.md`](tracking/m0-followups.md)
 
-### Milestone 1 — 지식베이스 (RAG)
-- [ ] 지식베이스 CRUD API
-- [ ] 파일 업로드 + 진행률 SSE
-- [ ] 파일 파서 모듈 (Phase 0 포맷별 검증)
-- [ ] EmbeddingProvider Registry (local_hf 디폴트 / fastembed fallback / OpenAI / vLLM)
-- [ ] ChatProvider Registry (OpenAI / Claude / vLLM) — Milestone 3에서도 사용
-- [ ] 로컬 HF 모델 로딩 (`langchain-huggingface`, GPU auto-detect)
-- [ ] Docker volume 마운트로 호스트 모델 접근 검증
-- [ ] 청킹 + 임베딩 파이프라인
-- [ ] Qdrant 컬렉션 관리 (차원 고정)
-- [ ] 검색 테스트 UI
-- [ ] 지식 탭 UI 구현 (Clay 디자인) — "디폴트로 즉시 진행" UX 확보
+### Milestone 1 — 지식베이스 (RAG) ✅ 완료 (2026-04-09)
+- [x] 지식베이스 CRUD API
+- [x] 파일 업로드 + 진행률 SSE
+- [x] 파일 파서 모듈 (11 포맷: txt/md/html/xml/pdf/docx/pptx/xlsx/csv/epub/eml)
+- [x] EmbeddingProvider Registry (local_hf 디폴트 / fastembed fallback)
+- [ ] ChatProvider Registry (OpenAI / Claude / vLLM) — Milestone 3에서도 사용 → **M3로 이관**
+- [x] 로컬 HF 모델 로딩 (`langchain-huggingface`, GPU auto-detect)
+- [x] Docker volume 마운트로 호스트 모델 접근 검증
+- [x] 청킹 + 임베딩 파이프라인
+- [x] Qdrant 컬렉션 관리 (차원 고정)
+- [x] 검색 테스트 UI
+- [x] 지식 탭 UI 구현 — 목록/생성/상세/파일업로드/SSE진행률/검색 패널
+> 상세: [`docs/plans/2026-04-09-milestone-1-knowledge-rag.md`](plans/2026-04-09-milestone-1-knowledge-rag.md) | 상태: [`docs/tracking/m1-status.md`](tracking/m1-status.md)
 
 ### Milestone 2 — 도구 (MCP)
 - [ ] MCP 서버 CRUD API
