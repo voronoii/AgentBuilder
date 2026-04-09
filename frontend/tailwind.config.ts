@@ -5,6 +5,11 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Clay semantic tokens (mapped to palette values below)
+        'clay-accent': '#078a52',   // = matcha-600
+        'clay-border': '#dad4c8',   // = oat.DEFAULT
+        'clay-surface': '#faf9f7',  // = cream
+        'clay-text': '#55534e',     // = warmCharcoal
         // Clay base — see DESIGN.md §2
         cream: '#faf9f7',
         clayBlack: '#000000',
