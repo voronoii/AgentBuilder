@@ -8,6 +8,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, UploadFile, status
 from fastapi.responses import Response
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
@@ -49,8 +50,15 @@ async def create_kb(
     settings = get_settings()
     repo = KnowledgeRepository(session)
     collection = f"{settings.qdrant_collection_prefix}{_slugify(payload.name)}"
-    kb = await repo.create_kb(payload, qdrant_collection=collection)
-    await session.commit()
+    try:
+        kb = await repo.create_kb(payload, qdrant_collection=collection)
+        await session.commit()
+    except IntegrityError:
+        raise AppError(
+            status_code=409,
+            code=ErrorCode.KNOWLEDGE_DUPLICATE_NAME,
+            detail=f"knowledge base with name '{payload.name}' already exists",
+        )
     return kb
 
 
