@@ -10,7 +10,7 @@
 
 ## A. CORS 미들웨어 🚨
 
-- [ ] **상태**: 미해결 (M3 전 필수)
+- [x] **상태**: 해결됨 (M1에서 선행 구현)
 - **문제**: M0 현재는 Next.js Server Component가 컨테이너 내부 네트워크로 API를 호출하므로 CORS 불필요. M3/M4에서 클라이언트 사이드 fetch (SSE 스트리밍, React Flow 실시간 업데이트) 추가 시 브라우저가 `http://localhost:28000`을 호출하며 CORS 프리플라이트 발생.
 - **해결책**:
   ```python
@@ -25,14 +25,14 @@
   )
   ```
   `Settings`에 `cors_origins: list[str]` 추가. `.env.example`에서 `AGENTBUILDER_CORS_ORIGINS='["http://localhost:23000","http://localhost:3000"]'` 같은 JSON 리스트.
-- **언제**: M3 Task 1 (캔버스 프론트 세팅) 직전
-- **해결 커밋**: —
+- **언제**: M1 Task 2에서 선행 처리
+- **해결 커밋**: `50821a9`
 
 ---
 
 ## B. 브라우저용 vs 서버용 API URL 이원화 🚨
 
-- [ ] **상태**: 미해결 (M3 전 필수)
+- [x] **상태**: 해결됨 (M1에서 선행 구현)
 - **문제**: 현재 `docker-compose.yml`에서 `NEXT_PUBLIC_API_URL=http://api:8000`로 세팅. `NEXT_PUBLIC_*`은 **빌드 타임**에 클라이언트 번들에 박히므로, M3에서 클라이언트 사이드 fetch 추가 시 브라우저가 `http://api:8000`을 호출 시도 → 실패 (이 호스트는 브라우저 시점에 보이지 않음).
 - **해결책**: Server Component와 Client Component용 URL을 분리.
   ```yaml
@@ -44,8 +44,8 @@
   ```
   `frontend/lib/api.ts`에서 `typeof window === 'undefined' ? API_URL_INTERNAL : NEXT_PUBLIC_API_URL`로 분기.
 - **주의**: `NEXT_PUBLIC_API_URL`은 빌드 시점 필요 → `web` Dockerfile의 build stage에 `ARG`로 주입하거나, docker-compose `build.args`로 전달.
-- **언제**: M3 Task 1
-- **해결 커밋**: —
+- **언제**: M1 Task 2에서 선행 처리
+- **해결 커밋**: `50821a9`
 
 ---
 
@@ -71,30 +71,32 @@
 
 ## E. M1 의존성 사전 점검 ⭐
 
-- [ ] **상태**: 미해결 (M1 Task 1에서 처리)
+- [x] **상태**: 해결됨 (M1 Task 1)
 - **필요 패키지** (M1 시작 시 `pyproject.toml`에 추가):
   ```
-  qdrant-client
-  langchain-core
-  langchain-huggingface
-  sentence-transformers
-  fastembed                     # fallback
-  pypdf
-  python-docx
-  python-pptx
-  openpyxl
-  ebooklib
-  beautifulsoup4
+  qdrant-client>=1.12
+  langchain-core>=0.3
+  langchain-text-splitters>=0.3
+  langchain-huggingface>=0.1.2
+  sentence-transformers>=3.3
+  fastembed>=0.5,<1.0            # fallback (BAAI/bge-small-en-v1.5)
+  pypdf>=5.1
+  python-docx>=1.1
+  python-pptx>=1.0
+  openpyxl>=3.1
+  ebooklib>=0.18
+  beautifulsoup4>=4.12
+  sse-starlette>=2.1
   ```
-- **주의**: 모델 다운로드 검증 — `HuggingFaceEmbeddings(model_name="/models/snowflake-arctic-embed-l-v2.0-ko")`가 컨테이너 내부에서 동작하는지 초기 테스트 필수.
-- **언제**: M1 Task 1
-- **해결 커밋**: —
+- **주의**: fastembed 0.8+ 에서 `intfloat/multilingual-e5-small` 제거됨 → `BAAI/bge-small-en-v1.5` 사용.
+- **언제**: M1 Task 1에서 처리
+- **해결 커밋**: `a7526a8`
 
 ---
 
 ## F. 에러 응답 포맷 표준 부재 ⭐
 
-- [x] **상태**: 스펙 확정됨, 구현은 M1 첫 엔드포인트에서
+- [x] **상태**: 해결됨 (스펙 확정 M0, 구현 M1)
 - **결정**: **FastAPI 기본 `HTTPException` + 일관된 JSON envelope**
   ```json
   {
@@ -108,7 +110,7 @@
   - Global exception handler가 envelope로 직렬화
   - `request_id`는 middleware가 header에서 읽거나 생성
 - **스펙 반영**: §11.2 (에러 응답 표준)으로 추가
-- **해결 커밋**: `417028c`
+- **해결 커밋**: `417028c` (스펙), `50821a9` (구현)
 
 ---
 
