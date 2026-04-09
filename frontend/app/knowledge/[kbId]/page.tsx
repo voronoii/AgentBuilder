@@ -1,5 +1,4 @@
 import { getKnowledgeBase, listDocuments } from '@/lib/knowledge';
-import { FileUpload } from '@/components/knowledge/FileUpload';
 import { IngestionProgress } from '@/components/knowledge/IngestionProgress';
 import { SearchPanel } from '@/components/knowledge/SearchPanel';
 
@@ -21,7 +20,6 @@ export default async function KbDetailPage({ params }: { params: Promise<{ kbId:
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="space-y-4">
           <h2 className="text-lg font-medium">파일 업로드</h2>
-          <FileUpload kbId={kb.id} />
           <IngestionProgress kbId={kb.id} initialDocuments={documents} />
         </div>
         <div className="space-y-4">
