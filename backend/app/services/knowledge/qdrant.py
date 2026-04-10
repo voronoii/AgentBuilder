@@ -71,11 +71,15 @@ class QdrantStore:
     async def search(
         self, name: str, *, query: list[float], top_k: int = 5, score_threshold: float | None = None
     ) -> list[dict[str, Any]]:
-        hits = await self._run(
-            self._client.search,
+        # qdrant-client >=1.14: search() removed, use query_points()
+        if not await self._collection_exists(name):
+            return []
+        result = await self._run(
+            self._client.query_points,
             collection_name=name,
-            query_vector=query,
+            query=query,
             limit=top_k,
             score_threshold=score_threshold,
+            with_payload=True,
         )
-        return [{"id": h.id, "score": h.score, "payload": h.payload or {}} for h in hits]
+        return [{"id": h.id, "score": h.score, "payload": h.payload or {}} for h in result.points]

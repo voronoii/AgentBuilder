@@ -12,8 +12,8 @@ type ProgressEvent = {
   error: string | null;
 };
 
-// SSE는 Next.js rewrite 버퍼링을 피해 API를 직접 호출
-const SSE_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:28000';
+// SSE는 Next.js rewrite (/api/*) 를 통해 프록시. 원격 서버에서도 동작.
+const SSE_BASE = '/api';
 
 export function IngestionProgress({
   kbId,
@@ -29,7 +29,7 @@ export function IngestionProgress({
   const [error, setError] = useState<string | null>(null);
   const esRef = useRef<EventSource | null>(null);
 
-  // SSE 연결 — API 직접 (rewrite 우회)
+  // SSE 연결 — Next.js rewrite 경유
   useEffect(() => {
     const es = new EventSource(`${SSE_BASE}/knowledge/${kbId}/ingestion/stream`);
     esRef.current = es;
@@ -37,13 +37,26 @@ export function IngestionProgress({
       const evt = JSON.parse((ev as MessageEvent).data) as ProgressEvent;
       setProgress((prev) => ({ ...prev, [evt.document_id]: evt }));
       if (evt.status === 'done' || evt.status === 'failed') {
-        // 완료 시 목록 새로고침
         setDocs(await listDocuments(kbId));
       }
     });
     es.onerror = () => {};
     return () => es.close();
   }, [kbId]);
+
+  // Fallback 폴링: pending/processing 문서가 있으면 2초마다 목록 갱신
+  useEffect(() => {
+    const hasInflight = docs.some((d) => d.status === 'pending' || d.status === 'processing');
+    if (!hasInflight) return;
+    const timer = setInterval(async () => {
+      try {
+        setDocs(await listDocuments(kbId));
+      } catch {
+        /* ignore */
+      }
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [kbId, docs]);
 
   async function handleFiles(files: FileList | File[]) {
     setError(null);
