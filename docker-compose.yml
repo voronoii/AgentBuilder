@@ -42,6 +42,7 @@ services:
       AGENTBUILDER_DEFAULT_EMBEDDING_MODEL_PATH: /models/snowflake-arctic-embed-l-v2.0-ko
       AGENTBUILDER_OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       AGENTBUILDER_ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AGENTBUILDER_VLLM_BASE_URL: ${VLLM_BASE_URL:-}
     volumes:
       - uploads:/app/uploads
       - ${HF_MODELS_PATH:-/DATA3/users/mj/hf_models}:/models:ro

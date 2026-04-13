@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     # Uploads and ingestion
     uploads_dir: str = "/app/uploads"
     ingestion_max_concurrency: int = 2
+    max_upload_mb: int = 50
 
     # Qdrant
     qdrant_collection_prefix: str = "kb_"
@@ -63,11 +64,23 @@ class Settings(BaseSettings):
         "http://localhost:3000",
     ]
 
+    # MCP tool system
+    mcp_discovery_timeout: int = 30  # seconds per discovery attempt
+
     # Optional API keys for chat providers (loaded if present)
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
 
+    # vLLM (OpenAI-compatible local model serving)
+    vllm_base_url: str | None = None
+
+
+_settings_cache: Settings | None = None
+
 
 def get_settings() -> Settings:
-    """Factory used by FastAPI dependency injection."""
-    return Settings()
+    """Cached singleton — parsed once, reused on every call."""
+    global _settings_cache  # noqa: PLW0603
+    if _settings_cache is None:
+        _settings_cache = Settings()
+    return _settings_cache

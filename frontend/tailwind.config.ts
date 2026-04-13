@@ -4,12 +4,17 @@ const config: Config = {
   content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        kopub: ['var(--font-kopub)', 'sans-serif'],
+      },
       colors: {
         // Clay semantic tokens (mapped to palette values below)
-        'clay-accent': '#078a52',   // = matcha-600
+        'clay-accent': '#7c3aed',   // = violet-600 (VAIV brand)
         'clay-border': '#dad4c8',   // = oat.DEFAULT
         'clay-surface': '#faf9f7',  // = cream
         'clay-text': '#55534e',     // = warmCharcoal
+        'clay-bg': '#faf9f7',
+        'clay-muted': '#9f9b93',
         // Clay base — see DESIGN.md §2
         cream: '#faf9f7',
         clayBlack: '#000000',
@@ -53,8 +58,11 @@ const config: Config = {
         section: '40px',
       },
       boxShadow: {
-        clay:
-          '0px 1px 1px rgba(0,0,0,0.1), 0px -1px 1px rgba(0,0,0,0.04) inset, 0px -0.5px 1px rgba(0,0,0,0.05)',
+        'clay': '0px 1px 1px rgba(0,0,0,0.1), 0px -1px 1px rgba(0,0,0,0.04) inset, 0px -0.5px 1px rgba(0,0,0,0.05)',
+        'clay-0': 'none',
+        'clay-1': '0 1px 3px rgba(0,0,0,0.06)',
+        'clay-2': '0 4px 12px rgba(0,0,0,0.08)',
+        'clay-focus': '0 0 0 2px rgba(124,58,237,0.2)',
       },
     },
   },

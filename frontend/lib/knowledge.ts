@@ -26,6 +26,33 @@ export type DocumentRead = {
   created_at: string;
 };
 
+export type KnowledgeConfig = {
+  supported_extensions: string[];
+  max_upload_mb: number;
+};
+
+export async function getKnowledgeConfig(): Promise<KnowledgeConfig> {
+  const res = await fetch(`${apiBase()}/knowledge/config`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`getKnowledgeConfig failed: HTTP ${res.status}`);
+  return (await res.json()) as KnowledgeConfig;
+}
+
+export type ChunkPreview = { chunk_index: number; text: string };
+
+export async function listDocumentChunks(
+  kbId: string,
+  docId: string,
+  limit = 3,
+): Promise<ChunkPreview[]> {
+  const res = await fetch(
+    `${apiBase()}/knowledge/${kbId}/documents/${docId}/chunks?limit=${limit}`,
+    { cache: 'no-store' },
+  );
+  if (!res.ok) throw new Error(`listDocumentChunks failed: HTTP ${res.status}`);
+  const data = (await res.json()) as { chunks: ChunkPreview[] };
+  return data.chunks;
+}
+
 export async function listKnowledgeBases(): Promise<KnowledgeBase[]> {
   const res = await fetch(`${apiBase()}/knowledge`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`listKnowledgeBases failed: HTTP ${res.status}`);
@@ -60,6 +87,13 @@ export async function uploadDocument(kbId: string, file: File): Promise<Document
   const res = await fetch(`${apiBase()}/knowledge/${kbId}/documents`, { method: 'POST', body });
   if (!res.ok) throw new Error(await res.text());
   return (await res.json()) as DocumentRead;
+}
+
+export async function deleteDocument(kbId: string, docId: string): Promise<void> {
+  const res = await fetch(`${apiBase()}/knowledge/${kbId}/documents/${docId}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error(await res.text());
 }
 
 export type SearchHit = { score: number; text: string; filename: string; chunk_index: number };

@@ -14,9 +14,25 @@ class ErrorCode(StrEnum):
     KNOWLEDGE_DUPLICATE_NAME = "KNOWLEDGE_DUPLICATE_NAME"
     KNOWLEDGE_INVALID_INPUT = "KNOWLEDGE_INVALID_INPUT"
     KNOWLEDGE_UNSUPPORTED_FILE = "KNOWLEDGE_UNSUPPORTED_FILE"
+    KNOWLEDGE_FILE_TOO_LARGE = "KNOWLEDGE_FILE_TOO_LARGE"
     KNOWLEDGE_PARSER_FAILED = "KNOWLEDGE_PARSER_FAILED"
     KNOWLEDGE_EMBEDDING_FAILED = "KNOWLEDGE_EMBEDDING_FAILED"
     KNOWLEDGE_QDRANT_UNAVAILABLE = "KNOWLEDGE_QDRANT_UNAVAILABLE"
+    # MCP
+    MCP_NOT_FOUND = "MCP_NOT_FOUND"
+    MCP_DUPLICATE_NAME = "MCP_DUPLICATE_NAME"
+    MCP_CONNECTION_FAILED = "MCP_CONNECTION_FAILED"
+    MCP_DISCOVERY_FAILED = "MCP_DISCOVERY_FAILED"
+    # Workflow
+    WORKFLOW_NOT_FOUND = "WORKFLOW_NOT_FOUND"
+    WORKFLOW_DUPLICATE_NAME = "WORKFLOW_DUPLICATE_NAME"
+    # Run
+    RUN_NOT_FOUND = "RUN_NOT_FOUND"
+    RUN_ALREADY_FINISHED = "RUN_ALREADY_FINISHED"
+    RUN_CANCEL_FAILED = "RUN_CANCEL_FAILED"
+    COMPILATION_FAILED = "COMPILATION_FAILED"
+    # Settings
+    SETTING_NOT_FOUND = "SETTING_NOT_FOUND"
     # Cross-cutting
     VALIDATION_FAILED = "VALIDATION_FAILED"
     INTERNAL_UNEXPECTED = "INTERNAL_UNEXPECTED"
@@ -72,7 +88,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=422,
             content=_envelope(
-                detail="request validation failed",
+                detail="요청 데이터가 올바르지 않습니다.",
                 code=ErrorCode.VALIDATION_FAILED,
                 request_id=rid,
                 extra={"errors": exc.errors()},
@@ -86,7 +102,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=500,
             content=_envelope(
-                detail="internal server error",
+                detail="서버 내부 오류가 발생했습니다.",
                 code=ErrorCode.INTERNAL_UNEXPECTED,
                 request_id=rid,
             ),

@@ -68,6 +68,26 @@ class QdrantStore:
         if not await self._collection_exists(name):
             await self.create_collection(name, dimension=dimension)
 
+    async def scroll_by_document(
+        self, name: str, *, document_id: str, limit: int = 3
+    ) -> list[dict[str, Any]]:
+        if not await self._collection_exists(name):
+            return []
+        result = await self._run(
+            self._client.scroll,
+            collection_name=name,
+            scroll_filter=qm.Filter(
+                must=[
+                    qm.FieldCondition(key="document_id", match=qm.MatchValue(value=document_id))
+                ]
+            ),
+            limit=limit,
+            with_payload=True,
+            with_vectors=False,
+        )
+        points, _ = result
+        return [{"id": p.id, "payload": p.payload or {}} for p in points]
+
     async def search(
         self, name: str, *, query: list[float], top_k: int = 5, score_threshold: float | None = None
     ) -> list[dict[str, Any]]:

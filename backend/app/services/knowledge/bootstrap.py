@@ -30,6 +30,9 @@ class _NoopStore:
     async def search(self, *a: Any, **kw: Any) -> list[dict[str, Any]]:
         return []
 
+    async def scroll_by_document(self, *a: Any, **kw: Any) -> list[dict[str, Any]]:
+        return []
+
 
 def get_store() -> Any:
     global _store_singleton

@@ -71,6 +71,15 @@ class KnowledgeRepository:
     async def get_document(self, doc_id: uuid.UUID) -> Document | None:
         return await self._session.get(Document, doc_id)
 
+    async def delete_document(self, doc_id: uuid.UUID) -> Document | None:
+        """Delete a document row and return it (for cleanup of file + vectors)."""
+        doc = await self.get_document(doc_id)
+        if doc is None:
+            return None
+        await self._session.delete(doc)
+        await self._session.flush()
+        return doc
+
     async def set_document_status(
         self,
         doc_id: uuid.UUID,

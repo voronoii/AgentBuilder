@@ -70,7 +70,9 @@
 
 ---
 
-## 실사용 테스트 후 발견 버그 (2026-04-09)
+## 실사용 테스트 후 발견 버그
+
+### 1차 (2026-04-09)
 
 | 커밋 | 버그 | 원인 | 수정 |
 |------|------|------|------|
@@ -78,7 +80,29 @@
 | `3e09d63` | "새 지식베이스" 버튼·테두리·배경 미표시 | `clay-accent` 등 semantic 토큰이 Tailwind config에 미등록 | `tailwind.config.ts`에 `clay-accent/border/surface/text` 추가 |
 | `5f5126c` | KB 생성 시 "failed to fetch" | `frontend/Dockerfile` build 스테이지에 `ARG NEXT_PUBLIC_API_URL` 선언 누락 → 번들에 `undefined` 박힘 | `ARG` + `ENV` 추가 |
 
-> **M2~M5 체크 포인트**: 새 `NEXT_PUBLIC_*` 환경변수 추가 시 반드시 `frontend/Dockerfile` build 스테이지에도 `ARG` + `ENV` 선언 추가할 것.
+### 2차 (2026-04-10) — 원격 E2E 테스트
+
+| 커밋 | 버그 | 원인 | 수정 |
+|------|------|------|------|
+| `54e8bca` | 원격 브라우저에서 "failed to fetch" 지속 | 번들에 `localhost:28000` 하드코딩 → 원격 PC에서 도달 불가 | Next.js `rewrites()` 프록시 도입 (`/api/*` → `http://api:8000`), 브라우저는 same-origin `/api` 호출 |
+| `f25b807` | KB 생성 시 500 `INTERNAL_UNEXPECTED` | 동일 이름 KB 재생성 → `IntegrityError` 미캐치 | `IntegrityError` catch → 409 `KNOWLEDGE_DUPLICATE_NAME` 응답 |
+| `da3f233` | 파일 업로드 실패 (Qdrant 404) | `delete_by_document` 호출 시 컬렉션 미존재 | `_collection_exists` 체크 추가 + `ensure_collection` 자동 생성 로직 |
+| `237c48a` | 파일 업로드 후 UI에 반영 안됨 | SSE가 `localhost:28000` 직접 연결 → 원격에서 수신 불가 | FileUpload → IngestionProgress 통합, SSE를 `/api` 프록시 경유로 변경 |
+| `3e126db` | SSE 불안정 + 검색 500 에러 | SSE 원격 연결 불안정 / qdrant-client 1.17에서 `search()` 제거됨 | 2초 폴링 fallback 추가 / `search()` → `query_points()` 마이그레이션 |
+
+### UX 개선 (2026-04-10)
+
+| 변경 | 내용 |
+|------|------|
+| 업로드 안내 표시 | 지원 확장자 15종 + 최대 업로드 크기(50MB) 표시 |
+| 파일 크기 검증 | 클라이언트 사전 검증 + 서버 413 `KNOWLEDGE_FILE_TOO_LARGE` |
+| 청크 미리보기 | 완료 문서에서 상위 3개 청크 텍스트 미리보기 (Qdrant scroll API) |
+| 신규 엔드포인트 | `GET /knowledge/config`, `GET /knowledge/{kb_id}/documents/{doc_id}/chunks` |
+
+> **M2~M5 체크 포인트**:
+> - 새 `NEXT_PUBLIC_*` 환경변수 추가 시 반드시 `frontend/Dockerfile` build 스테이지에도 `ARG` + `ENV` 선언 추가할 것
+> - qdrant-client 버전 업그레이드 시 API 호환성 확인 필수 (1.14+ `search()` → `query_points()`)
+> - 원격 접속 시 프론트엔드는 반드시 same-origin 프록시 경유 (직접 `localhost` 호출 금지)
 
 ---
 

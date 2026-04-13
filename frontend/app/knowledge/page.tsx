@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Plus } from 'lucide-react';
 import { KbList } from '@/components/knowledge/KbList';
 import { listKnowledgeBases, type KnowledgeBase } from '@/lib/knowledge';
 
@@ -17,9 +18,10 @@ export default async function KnowledgePage() {
         <h1 className="text-2xl font-semibold">지식베이스</h1>
         <Link
           href="/knowledge/new"
-          className="rounded-full bg-clay-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-clay-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
         >
-          + 새 지식베이스
+          <Plus className="h-4 w-4" />
+          새 지식베이스
         </Link>
       </div>
       <KbList items={kbs} />

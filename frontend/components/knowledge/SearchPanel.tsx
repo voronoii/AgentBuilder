@@ -1,7 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { Search } from 'lucide-react';
 import { searchKnowledgeBase, type SearchHit } from '@/lib/knowledge';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export function SearchPanel({ kbId }: { kbId: string }) {
   const [query, setQuery] = useState('');
@@ -25,12 +28,16 @@ export function SearchPanel({ kbId }: { kbId: string }) {
   return (
     <div className="space-y-4">
       <form onSubmit={onSubmit} className="flex gap-2">
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="검색어를 입력하세요"
-          className="flex-1 rounded-lg border border-clay-border bg-white px-3 py-2" />
-        <button type="submit" disabled={busy || !query.trim()}
-          className="rounded-lg bg-clay-accent px-4 py-2 text-sm text-white disabled:opacity-50">
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="검색어를 입력하세요"
+          className="flex-1"
+        />
+        <Button type="submit" size="sm" disabled={busy || !query.trim()}>
+          <Search className="h-4 w-4" />
           검색
-        </button>
+        </Button>
       </form>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <ul className="space-y-2">

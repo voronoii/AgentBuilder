@@ -1,0 +1,235 @@
+<style>
+  .palette-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 24px;
+    margin: 16px 0;
+    overflow: hidden;
+  }
+  .palette-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .palette-tag { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; }
+  .palette-title { font-size: 17px; font-weight: 700; color: #111; }
+
+  .swatch-row { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .swatch {
+    width: 64px; height: 64px;
+    border-radius: 10px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-end;
+    padding: 4px;
+    font-size: 9px; font-weight: 600;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .swatch.light-text { color: #333; text-shadow: none; }
+  .swatch-label { font-size: 8px; opacity: 0.8; }
+
+  /* Mini UI mockups */
+  .mock-row { display: flex; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+
+  .mock-nav {
+    display: flex; align-items: center; gap: 0;
+    background: #faf9f7; border: 1px solid #e5e7eb; border-radius: 10px;
+    overflow: hidden; font-size: 12px; width: 100%;
+  }
+  .mock-nav .logo { padding: 10px 16px; font-weight: 700; color: #111; display: flex; align-items: center; gap: 6px; }
+  .mock-nav .logo-icon { width: 22px; height: 22px; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: 800; }
+  .mock-nav .tab { padding: 10px 14px; font-size: 11px; color: #999; }
+  .mock-nav .tab.active { font-weight: 600; color: #111; }
+
+  .mock-node {
+    width: 180px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .mock-node .nh { padding: 8px 12px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #f3f4f6; }
+  .mock-node .nh .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .mock-node .nh span { font-size: 11px; font-weight: 600; color: #111; }
+  .mock-node .nb { padding: 8px 12px; font-size: 10px; color: #999; }
+
+  .mock-btn { padding: 6px 14px; border-radius: 7px; font-size: 11px; font-weight: 600; color: #fff; display: inline-block; margin-right: 6px; }
+  .mock-btn.outline { background: transparent !important; border: 1px solid; }
+
+  .mock-badge { padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 600; display: inline-block; }
+
+  .mock-chat { width: 240px; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background: #fff; }
+  .mock-chat .ch { padding: 8px 12px; border-bottom: 1px solid #f3f4f6; font-size: 11px; font-weight: 600; }
+  .mock-chat .cb { padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .mock-chat .msg-user { align-self: flex-end; padding: 6px 10px; border-radius: 10px 10px 3px 10px; font-size: 10px; color: #fff; max-width: 70%; }
+  .mock-chat .msg-bot { align-self: flex-start; padding: 6px 10px; border-radius: 10px 10px 10px 3px; font-size: 10px; color: #333; background: #f9fafb; border: 1px solid #e5e7eb; max-width: 80%; }
+  .mock-chat .ci { padding: 8px 12px; border-top: 1px solid #f3f4f6; display: flex; gap: 6px; }
+  .mock-chat .ci input { flex: 1; padding: 4px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 10px; }
+  .mock-chat .ci .send { padding: 4px 10px; border-radius: 6px; color: #fff; font-size: 10px; font-weight: 600; }
+
+  .excluded-note { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #b91c1c; margin-bottom: 16px; }
+</style>
+
+<h2>VAIV 브랜드 테마 후보</h2>
+<p class="subtitle">파랑~보라 계열, #3864ff 제외, 흰색 기반</p>
+
+<div class="excluded-note">
+  <strong>제외 컬러:</strong> <span style="display:inline-block;width:14px;height:14px;background:#3864ff;border-radius:3px;vertical-align:middle;margin:0 4px;"></span> #3864ff — 기존 서비스에서 이미 과다 사용
+</div>
+
+<!-- Option A: Indigo -->
+<div class="palette-card option" data-choice="a" onclick="toggleSelect(this)">
+  <div class="letter">A</div>
+  <div class="content">
+  <div class="palette-header">
+    <span class="palette-tag" style="background:#eef2ff;color:#4f46e5;">A</span>
+    <span class="palette-title">Indigo — 차분한 남보라</span>
+  </div>
+  <p style="font-size:13px;color:#666;margin-bottom:12px;">VAIV Agent 페이지의 라벤더 톤과 가장 가까움. 신뢰감 + 테크 느낌. Dify와 유사한 차분한 톤.</p>
+
+  <div class="swatch-row">
+    <div class="swatch light-text" style="background:#eef2ff;">50<br><span class="swatch-label">#eef2ff</span></div>
+    <div class="swatch light-text" style="background:#c7d2fe;">200<br><span class="swatch-label">#c7d2fe</span></div>
+    <div class="swatch" style="background:#818cf8;">400<br><span class="swatch-label">#818cf8</span></div>
+    <div class="swatch" style="background:#6366f1;">500<br><span class="swatch-label">#6366f1</span></div>
+    <div class="swatch" style="background:#4f46e5;">600<br><span class="swatch-label">#4f46e5</span></div>
+    <div class="swatch" style="background:#3730a3;">800<br><span class="swatch-label">#3730a3</span></div>
+  </div>
+
+  <div style="font-size:11px;color:#999;margin:8px 0 4px;">적용 예시</div>
+  <div class="mock-nav">
+    <div class="logo"><div class="logo-icon" style="background:#4f46e5;">A</div> AgentBuilder</div>
+    <div class="tab">지식</div><div class="tab active" style="border-bottom:2px solid #4f46e5;">워크플로우</div><div class="tab">도구</div><div class="tab">설정</div>
+  </div>
+  <div class="mock-row">
+    <div class="mock-node">
+      <div class="nh"><div class="dot" style="background:#06b6d4;"></div><span>Language Model</span></div>
+      <div class="nb">gpt-4o · 0.7</div>
+    </div>
+    <div class="mock-node">
+      <div class="nh"><div class="dot" style="background:#8b5cf6;"></div><span>Agent</span></div>
+      <div class="nb">max iter: 5</div>
+    </div>
+  </div>
+  <div style="margin-top:12px;">
+    <div class="mock-btn" style="background:#4f46e5;">저장</div>
+    <div class="mock-btn outline" style="color:#4f46e5;border-color:#4f46e5;">실행</div>
+    <div class="mock-badge" style="background:#eef2ff;color:#4f46e5;">Active</div>
+    <div class="mock-badge" style="background:#fef2f2;color:#ef4444;">SECRET</div>
+  </div>
+  <div class="mock-row">
+    <div class="mock-chat">
+      <div class="ch" style="color:#4f46e5;">플레이그라운드</div>
+      <div class="cb">
+        <div class="msg-user" style="background:#1e1b4b;">환불 정책 알려줘</div>
+        <div class="msg-bot">고객 환불 정책은...</div>
+      </div>
+      <div class="ci"><input placeholder="메시지 입력..." /><div class="send" style="background:#4f46e5;">전송</div></div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- Option B: Violet -->
+<div class="palette-card option" data-choice="b" onclick="toggleSelect(this)">
+  <div class="letter">B</div>
+  <div class="content">
+  <div class="palette-header">
+    <span class="palette-tag" style="background:#f5f3ff;color:#7c3aed;">B</span>
+    <span class="palette-title">Violet — 선명한 보라</span>
+  </div>
+  <p style="font-size:13px;color:#666;margin-bottom:12px;">Sometrend 배너의 보라 톤과 가장 가까움. 창의성 + AI 느낌이 강함. 파랑과의 차별성이 가장 뚜렷.</p>
+
+  <div class="swatch-row">
+    <div class="swatch light-text" style="background:#f5f3ff;">50<br><span class="swatch-label">#f5f3ff</span></div>
+    <div class="swatch light-text" style="background:#ddd6fe;">200<br><span class="swatch-label">#ddd6fe</span></div>
+    <div class="swatch" style="background:#a78bfa;">400<br><span class="swatch-label">#a78bfa</span></div>
+    <div class="swatch" style="background:#8b5cf6;">500<br><span class="swatch-label">#8b5cf6</span></div>
+    <div class="swatch" style="background:#7c3aed;">600<br><span class="swatch-label">#7c3aed</span></div>
+    <div class="swatch" style="background:#5b21b6;">800<br><span class="swatch-label">#5b21b6</span></div>
+  </div>
+
+  <div style="font-size:11px;color:#999;margin:8px 0 4px;">적용 예시</div>
+  <div class="mock-nav">
+    <div class="logo"><div class="logo-icon" style="background:#7c3aed;">A</div> AgentBuilder</div>
+    <div class="tab">지식</div><div class="tab active" style="border-bottom:2px solid #7c3aed;">워크플로우</div><div class="tab">도구</div><div class="tab">설정</div>
+  </div>
+  <div class="mock-row">
+    <div class="mock-node">
+      <div class="nh"><div class="dot" style="background:#06b6d4;"></div><span>Language Model</span></div>
+      <div class="nb">gpt-4o · 0.7</div>
+    </div>
+    <div class="mock-node">
+      <div class="nh"><div class="dot" style="background:#8b5cf6;"></div><span>Agent</span></div>
+      <div class="nb">max iter: 5</div>
+    </div>
+  </div>
+  <div style="margin-top:12px;">
+    <div class="mock-btn" style="background:#7c3aed;">저장</div>
+    <div class="mock-btn outline" style="color:#7c3aed;border-color:#7c3aed;">실행</div>
+    <div class="mock-badge" style="background:#f5f3ff;color:#7c3aed;">Active</div>
+    <div class="mock-badge" style="background:#fef2f2;color:#ef4444;">SECRET</div>
+  </div>
+  <div class="mock-row">
+    <div class="mock-chat">
+      <div class="ch" style="color:#7c3aed;">플레이그라운드</div>
+      <div class="cb">
+        <div class="msg-user" style="background:#2e1065;">환불 정책 알려줘</div>
+        <div class="msg-bot">고객 환불 정책은...</div>
+      </div>
+      <div class="ci"><input placeholder="메시지 입력..." /><div class="send" style="background:#7c3aed;">전송</div></div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- Option C: Periwinkle -->
+<div class="palette-card option" data-choice="c" onclick="toggleSelect(this)">
+  <div class="letter">C</div>
+  <div class="content">
+  <div class="palette-header">
+    <span class="palette-tag" style="background:#eceeff;color:#5b5bd6;">C</span>
+    <span class="palette-title">Periwinkle — 부드러운 청보라</span>
+  </div>
+  <p style="font-size:13px;color:#666;margin-bottom:12px;">VAIVGeM 페이지의 그라디언트 중간톤. Indigo와 Violet 사이의 균형. 부드러우면서도 #3864ff와 확실히 다름.</p>
+
+  <div class="swatch-row">
+    <div class="swatch light-text" style="background:#eceeff;">50<br><span class="swatch-label">#eceeff</span></div>
+    <div class="swatch light-text" style="background:#c4c6ff;">200<br><span class="swatch-label">#c4c6ff</span></div>
+    <div class="swatch" style="background:#8b8ef8;">400<br><span class="swatch-label">#8b8ef8</span></div>
+    <div class="swatch" style="background:#6c6cff;">500<br><span class="swatch-label">#6c6cff</span></div>
+    <div class="swatch" style="background:#5b5bd6;">600<br><span class="swatch-label">#5b5bd6</span></div>
+    <div class="swatch" style="background:#3d3d9e;">800<br><span class="swatch-label">#3d3d9e</span></div>
+  </div>
+
+  <div style="font-size:11px;color:#999;margin:8px 0 4px;">적용 예시</div>
+  <div class="mock-nav">
+    <div class="logo"><div class="logo-icon" style="background:#5b5bd6;">A</div> AgentBuilder</div>
+    <div class="tab">지식</div><div class="tab active" style="border-bottom:2px solid #5b5bd6;">워크플로우</div><div class="tab">도구</div><div class="tab">설정</div>
+  </div>
+  <div class="mock-row">
+    <div class="mock-node">
+      <div class="nh"><div class="dot" style="background:#06b6d4;"></div><span>Language Model</span></div>
+      <div class="nb">gpt-4o · 0.7</div>
+    </div>
+    <div class="mock-node">
+      <div class="nh"><div class="dot" style="background:#8b5cf6;"></div><span>Agent</span></div>
+      <div class="nb">max iter: 5</div>
+    </div>
+  </div>
+  <div style="margin-top:12px;">
+    <div class="mock-btn" style="background:#5b5bd6;">저장</div>
+    <div class="mock-btn outline" style="color:#5b5bd6;border-color:#5b5bd6;">실행</div>
+    <div class="mock-badge" style="background:#eceeff;color:#5b5bd6;">Active</div>
+    <div class="mock-badge" style="background:#fef2f2;color:#ef4444;">SECRET</div>
+  </div>
+  <div class="mock-row">
+    <div class="mock-chat">
+      <div class="ch" style="color:#5b5bd6;">플레이그라운드</div>
+      <div class="cb">
+        <div class="msg-user" style="background:#272763;">환불 정책 알려줘</div>
+        <div class="msg-bot">고객 환불 정책은...</div>
+      </div>
+      <div class="ci"><input placeholder="메시지 입력..." /><div class="send" style="background:#5b5bd6;">전송</div></div>
+    </div>
+  </div>
+  </div>
+</div>

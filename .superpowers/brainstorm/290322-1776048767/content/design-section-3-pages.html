@@ -1,0 +1,373 @@
+<style>
+  .section-box {
+    background: #fff;
+    border: 1px solid #dad4c8;
+    border-radius: 16px;
+    padding: 24px;
+    margin: 16px 0;
+  }
+  .section-title { font-size: 14px; font-weight: 700; color: #078a52; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+  .detail-item h4 { font-size: 14px; font-weight: 600; color: #000; margin-bottom: 6px; }
+  .detail-item p { font-size: 13px; color: #55534e; line-height: 1.7; }
+  .change-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+  .change-table th { text-align: left; color: #9f9b93; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 12px; border-bottom: 1px solid #eee9df; }
+  .change-table td { padding: 8px 12px; border-bottom: 1px solid #f5f3f0; color: #55534e; vertical-align: top; }
+  .before { color: #e65100; }
+  .after { color: #078a52; font-weight: 600; }
+
+  /* Page mockups */
+  .page-mock {
+    background: #faf9f7;
+    border: 1px solid #dad4c8;
+    border-radius: 12px;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    margin: 12px 0;
+  }
+  .page-header {
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #eee9df;
+  }
+  .page-header h3 { font-size: 18px; font-weight: 700; color: #000; margin: 0; }
+  .page-header .subtitle { font-size: 12px; color: #9f9b93; margin-top: 2px; }
+  .btn-primary { padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #fff; background: #078a52; border: none; display: flex; align-items: center; gap: 6px; }
+  .btn-primary svg { width: 14px; height: 14px; }
+  .page-body { padding: 20px 24px; }
+
+  /* Card grid */
+  .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card-v2 {
+    background: #fff;
+    border: 1px solid #dad4c8;
+    border-radius: 12px;
+    padding: 16px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    cursor: default;
+  }
+  .card-v2:hover { border-color: #078a52; box-shadow: 0 2px 8px rgba(7,138,82,0.06); }
+  .card-v2 .card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .card-v2 .card-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .card-v2 .card-icon svg { width: 18px; height: 18px; }
+  .card-v2 .card-title { font-size: 14px; font-weight: 600; color: #000; }
+  .card-v2 .card-desc { font-size: 12px; color: #9f9b93; line-height: 1.5; margin-bottom: 10px; }
+  .card-v2 .card-meta { display: flex; gap: 12px; font-size: 11px; color: #9f9b93; }
+  .card-v2 .card-meta span { display: flex; align-items: center; gap: 4px; }
+  .card-v2 .card-meta svg { width: 12px; height: 12px; }
+  .icon-green { background: #f0fdf4; color: #078a52; }
+  .icon-cyan { background: #ecfeff; color: #06b6d4; }
+  .icon-purple { background: #faf5ff; color: #8b5cf6; }
+
+  .card-v2 .card-actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #eee9df; }
+  .btn-sm { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 500; border: 1px solid #dad4c8; background: #fff; color: #55534e; display: flex; align-items: center; gap: 4px; }
+  .btn-sm svg { width: 12px; height: 12px; }
+  .btn-sm.danger { color: #ef4444; border-color: #fecaca; }
+
+  /* Empty state */
+  .empty-state {
+    border: 1px dashed #dad4c8;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    color: #9f9b93;
+  }
+  .empty-state svg { width: 40px; height: 40px; margin: 0 auto 12px; color: #dad4c8; }
+  .empty-state h4 { font-size: 14px; font-weight: 600; color: #55534e; margin-bottom: 4px; }
+  .empty-state p { font-size: 12px; margin-bottom: 16px; }
+  .btn-outline { padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500; color: #078a52; background: transparent; border: 1px solid #078a52; display: inline-flex; align-items: center; gap: 6px; }
+
+  /* Upload area */
+  .upload-area {
+    border: 2px dashed #dad4c8;
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+    background: #fff;
+  }
+  .upload-area svg { width: 32px; height: 32px; color: #9f9b93; margin: 0 auto 8px; }
+  .upload-area p { font-size: 12px; color: #9f9b93; margin-bottom: 12px; }
+
+  /* Settings rows */
+  .settings-group { margin-bottom: 20px; }
+  .settings-group-title { font-size: 12px; font-weight: 600; color: #9f9b93; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .settings-group-title svg { width: 14px; height: 14px; }
+  .setting-row {
+    background: #fff;
+    border: 1px solid #dad4c8;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .setting-key { font-size: 12px; font-weight: 600; color: #000; font-family: 'SF Mono', 'Consolas', monospace; }
+  .setting-val { font-size: 12px; color: #9f9b93; flex: 1; }
+  .badge-secret { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: #fef2f2; color: #ef4444; text-transform: uppercase; }
+
+  /* Playground chat */
+  .chat-mock {
+    background: #fff;
+    border: 1px solid #dad4c8;
+    border-radius: 12px;
+    width: 320px;
+    overflow: hidden;
+  }
+  .chat-header { padding: 12px 16px; border-bottom: 1px solid #eee9df; display: flex; align-items: center; gap: 8px; }
+  .chat-header svg { width: 14px; height: 14px; color: #078a52; }
+  .chat-header span { font-size: 13px; font-weight: 600; color: #000; }
+  .chat-header .pulse { width: 8px; height: 8px; border-radius: 50%; background: #078a52; margin-left: auto; }
+  .chat-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 120px; }
+  .msg-user { align-self: flex-end; background: #000; color: #fff; font-size: 12px; padding: 8px 12px; border-radius: 12px 12px 4px 12px; max-width: 75%; }
+  .msg-assistant { align-self: flex-start; background: #faf9f7; border: 1px solid #eee9df; color: #000; font-size: 12px; padding: 8px 12px; border-radius: 12px 12px 12px 4px; max-width: 75%; line-height: 1.5; }
+  .chat-input-area { padding: 12px 16px; border-top: 1px solid #eee9df; display: flex; gap: 8px; }
+  .chat-input { flex: 1; padding: 8px 10px; border: 1px solid #dad4c8; border-radius: 8px; font-size: 12px; }
+  .chat-send { padding: 8px 12px; border-radius: 8px; background: #078a52; color: #fff; font-size: 12px; font-weight: 600; border: none; display: flex; align-items: center; gap: 4px; }
+  .chat-send svg { width: 14px; height: 14px; }
+
+  .side-by-side { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+</style>
+
+<h2>섹션 3: 페이지별 리디자인</h2>
+<p class="subtitle">지식, 도구, 설정 페이지 + 플레이그라운드 채팅</p>
+
+<!-- Knowledge -->
+<div class="section-box">
+  <div class="section-title">지식 페이지</div>
+
+  <div class="page-mock">
+    <div class="page-header">
+      <div>
+        <h3>지식</h3>
+        <div class="subtitle">에이전트가 참조할 지식베이스를 관리합니다</div>
+      </div>
+      <button class="btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        새 지식베이스
+      </button>
+    </div>
+    <div class="page-body">
+      <div class="card-grid">
+        <div class="card-v2">
+          <div class="card-top">
+            <div class="card-icon icon-green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </div>
+            <span class="card-title">고객 FAQ</span>
+          </div>
+          <div class="card-desc">자주 묻는 질문과 답변 모음</div>
+          <div class="card-meta">
+            <span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/></svg>
+              3 파일
+            </span>
+            <span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+              128 청크
+            </span>
+          </div>
+          <div class="card-actions">
+            <button class="btn-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              편집
+            </button>
+            <button class="btn-sm danger">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              삭제
+            </button>
+          </div>
+        </div>
+
+        <div class="card-v2">
+          <div class="card-top">
+            <div class="card-icon icon-green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </div>
+            <span class="card-title">제품 매뉴얼</span>
+          </div>
+          <div class="card-desc">제품 사용 설명서 및 기술 문서</div>
+          <div class="card-meta">
+            <span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/></svg>
+              7 파일
+            </span>
+            <span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+              412 청크
+            </span>
+          </div>
+          <div class="card-actions">
+            <button class="btn-sm">편집</button>
+            <button class="btn-sm danger">삭제</button>
+          </div>
+        </div>
+
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <h4>지식베이스 추가</h4>
+          <p>파일을 업로드하여 에이전트의 지식을 구축하세요</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <table class="change-table">
+    <thead><tr><th>요소</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr><td>페이지 헤더</td><td>제목 + 설명 텍스트 + 액션 버튼 구조화</td></tr>
+      <tr><td>카드</td><td>아이콘 뱃지 + 메타 정보(파일 수, 청크 수) + 액션 버튼 하단 분리</td></tr>
+      <tr><td>빈 상태</td><td>SVG 아이콘 + 설명 + CTA 버튼</td></tr>
+      <tr><td>버튼 스타일</td><td>rounded-full pill → rounded-lg 사각 (Clay 버튼 체계 준수)</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Tools -->
+<div class="section-box">
+  <div class="section-title">도구 페이지</div>
+
+  <div class="page-mock">
+    <div class="page-header">
+      <div>
+        <h3>도구</h3>
+        <div class="subtitle">MCP 서버를 연결하여 에이전트에 외부 도구를 제공합니다</div>
+      </div>
+      <button class="btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        MCP 서버 추가
+      </button>
+    </div>
+    <div class="page-body">
+      <div class="card-v2" style="margin-bottom:12px;">
+        <div class="card-top">
+          <div class="card-icon icon-purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          </div>
+          <div style="flex:1;">
+            <span class="card-title">filesystem-server</span>
+            <div style="font-size:11px;color:#9f9b93;margin-top:2px;">STDIO · 5 tools</div>
+          </div>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:#f0fdf4;color:#078a52;font-weight:600;">Active</span>
+        </div>
+        <div class="card-desc">파일 시스템 접근을 위한 MCP 서버</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:#faf9f7;border:1px solid #eee9df;color:#55534e;">read_file</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:#faf9f7;border:1px solid #eee9df;color:#55534e;">write_file</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:#faf9f7;border:1px solid #eee9df;color:#55534e;">list_dir</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:#faf9f7;border:1px solid #eee9df;color:#55534e;">search</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:#faf9f7;border:1px solid #eee9df;color:#55534e;">delete</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <table class="change-table">
+    <thead><tr><th>요소</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr><td>제목</td><td>"도구 (MCP 서버)" → "도구"로 간소화, 설명은 subtitle로</td></tr>
+      <tr><td>서버 카드</td><td>아이콘 뱃지(Transport별) + 상태 badge + 도구 태그 칩</td></tr>
+      <tr><td>등록 모달</td><td>shadcn Dialog + Tabs 컴포넌트로 교체</td></tr>
+      <tr><td>Transport 아이콘</td><td>이모지 → Lucide (Terminal/Globe/Zap)</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Settings -->
+<div class="section-box">
+  <div class="section-title">설정 페이지</div>
+
+  <div class="page-mock">
+    <div class="page-header">
+      <div>
+        <h3>설정</h3>
+        <div class="subtitle">API 키, 엔드포인트, 일반 설정을 관리합니다</div>
+      </div>
+      <button class="btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        설정 추가
+      </button>
+    </div>
+    <div class="page-body">
+      <div class="settings-group">
+        <div class="settings-group-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          API Keys
+        </div>
+        <div class="setting-row">
+          <span class="setting-key">OPENAI_API_KEY</span>
+          <span class="badge-secret">SECRET</span>
+          <span class="setting-val">sk-••••••••••••</span>
+          <button class="btn-sm">편집</button>
+        </div>
+        <div class="setting-row">
+          <span class="setting-key">ANTHROPIC_API_KEY</span>
+          <span class="badge-secret">SECRET</span>
+          <span class="setting-val">sk-ant-••••••••</span>
+          <button class="btn-sm">편집</button>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Endpoints
+        </div>
+        <div class="setting-row">
+          <span class="setting-key">VLLM_BASE_URL</span>
+          <span class="setting-val">http://localhost:8000/v1</span>
+          <button class="btn-sm">편집</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <table class="change-table">
+    <thead><tr><th>요소</th><th>변경 내용</th></tr></thead>
+    <tbody>
+      <tr><td>탭 이름</td><td>"환경변수" → "설정"</td></tr>
+      <tr><td>그룹 헤더</td><td>이모지 → Lucide 아이콘 + uppercase 라벨</td></tr>
+      <tr><td>설정 행</td><td>compact한 1행 레이아웃, 인라인 편집/삭제</td></tr>
+      <tr><td>추가 폼</td><td>shadcn Dialog로 교체 (현재 인라인 확장 → 모달)</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Playground Chat -->
+<div class="section-box">
+  <div class="section-title">플레이그라운드 채팅</div>
+
+  <div class="side-by-side">
+    <div class="chat-mock">
+      <div class="chat-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span>플레이그라운드</span>
+        <div class="pulse"></div>
+      </div>
+      <div class="chat-body">
+        <div class="msg-user">고객 환불 정책에 대해 알려줘</div>
+        <div class="msg-assistant">고객 환불 정책은 다음과 같습니다. 구매 후 14일 이내에 환불을 요청하시면...</div>
+      </div>
+      <div class="chat-input-area">
+        <input class="chat-input" placeholder="메시지를 입력하세요..." />
+        <button class="chat-send">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div style="flex:1;min-width:200px;">
+      <div class="detail-item">
+        <h4>변경 사항</h4>
+        <p>
+          • 사용자 메시지: <span class="before">bg-blue-600</span> → <span class="after">bg-clayBlack (#000)</span><br>
+          • 어시스턴트 메시지: cream 배경 유지, oat 테두리<br>
+          • 전송 버튼: matcha 배경, Send 아이콘 (Lucide)<br>
+          • 노드 이벤트 로그: 이모지(▶/✓) → Lucide 아이콘 (Play/Check)<br>
+          • 헤더: "▶ 플레이그라운드" → Play 아이콘 + "플레이그라운드"<br>
+          • 패널 너비: 384px 유지
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
