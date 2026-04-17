@@ -19,6 +19,7 @@ const NODE_TYPES: NodeType[] = [
   'agent',
   'knowledge_base',
   'prompt_template',
+  'input_guardrail',
 ];
 
 interface McpTool {

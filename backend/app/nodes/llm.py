@@ -78,6 +78,7 @@ async def make_llm_node(
         return {
             "node_outputs": {node_id: output},
             "messages": [{"role": "assistant", "content": output}],
+            "final_output": output,
         }
 
     llm_node.__name__ = f"llm_{node_id}"

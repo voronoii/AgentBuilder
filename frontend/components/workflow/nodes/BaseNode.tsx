@@ -38,6 +38,12 @@ function FieldPreview({ data }: { data: NodeData }) {
       fields.push({ label: 'Variables', value: vars.join(', ') });
     }
   }
+  if (type === 'input_guardrail') {
+    if (data.checks && data.checks.length > 0) {
+      fields.push({ label: 'Checks', value: data.checks.join(', ') });
+    }
+    if (data.provider) fields.push({ label: 'Judge LLM', value: `${data.provider}/${data.model || '?'}` });
+  }
 
   if (fields.length === 0) return null;
 
@@ -176,6 +182,16 @@ export function KnowledgeBaseNode(props: NodeProps) {
 }
 
 export function PromptTemplateNode(props: NodeProps) {
+  return (
+    <BaseNode
+      id={props.id}
+      data={props.data as unknown as NodeData}
+      selected={props.selected}
+    />
+  );
+}
+
+export function InputGuardrailNode(props: NodeProps) {
   return (
     <BaseNode
       id={props.id}

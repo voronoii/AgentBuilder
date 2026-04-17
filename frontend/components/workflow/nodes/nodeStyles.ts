@@ -6,6 +6,7 @@ import {
   FileText,
   MessageSquare,
   MessageSquareShare,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -43,6 +44,11 @@ export const NODE_STYLES: Record<
     dotColor: 'bg-amber-500',
     icon: FileText,
     label: 'Prompt Template',
+  },
+  input_guardrail: {
+    dotColor: 'bg-orange-500',
+    icon: ShieldCheck,
+    label: 'Input Guardrail',
   },
 };
 

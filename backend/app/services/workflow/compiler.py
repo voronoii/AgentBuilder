@@ -139,19 +139,49 @@ class WorkflowCompiler:
         # START → first processing node
         graph.add_edge(START, processing_ids_ordered[0])
 
-        # Wire edges between processing nodes following the original UI graph.
+        # Identify guardrail nodes — they need conditional edges (not static)
+        # so that blocked inputs route directly to END, skipping downstream nodes.
+        guardrail_ids: set[str] = set()
+        for nid in processing_ids_ordered:
+            ntype = node_map[nid].get("data", {}).get("type", "")
+            if ntype == "input_guardrail":
+                guardrail_ids.add(nid)
+
+        # Wire edges between processing nodes.
+        # For guardrail sources: collect successors (conditional edges below).
+        # For other sources: add static edges as before.
+        guardrail_successors: dict[str, list[str]] = defaultdict(list)
+        has_outgoing: set[str] = set()
+
         for edge in edges:
             src, tgt = edge["source"], edge["target"]
-            # Only wire edges between actual processing nodes (not I/O terminals).
             if src in processing_set and tgt in processing_set:
-                graph.add_edge(src, tgt)
+                if src in guardrail_ids:
+                    guardrail_successors[src].append(tgt)
+                    has_outgoing.add(src)
+                else:
+                    graph.add_edge(src, tgt)
+                    has_outgoing.add(src)
+
+        # Add conditional edges for guardrail nodes:
+        # - guardrail_blocked=True  → END (skip all downstream)
+        # - guardrail_blocked=False → successor (normal flow)
+        for guard_id, successors in guardrail_successors.items():
+            router = _make_guardrail_router(successors)
+            graph.add_conditional_edges(guard_id, router, [*successors, END])
+            _log.debug(
+                "compile: guardrail %s → conditional [%s, END]",
+                guard_id, ", ".join(successors),
+            )
 
         # Sink processing nodes → END
-        # Sinks = nodes that have no outgoing edges to other processing nodes.
-        # ALL sinks must be connected to END (not just one).
-        sink_ids = self._find_sink_nodes(
-            processing_ids_ordered, edges, processing_set
-        )
+        # Sinks = nodes with no outgoing edges (static or conditional).
+        sink_ids = [
+            nid for nid in processing_ids_ordered if nid not in has_outgoing
+        ]
+        if not sink_ids:
+            sink_ids = [processing_ids_ordered[-1]]
+
         for sink_id in sink_ids:
             graph.add_edge(sink_id, END)
 
@@ -237,6 +267,22 @@ class WorkflowCompiler:
 # ---------------------------------------------------------------------------
 # Convenience helper used by the run API
 # ---------------------------------------------------------------------------
+
+
+def _make_guardrail_router(successors: list[str]):
+    """Create a routing function for guardrail conditional edges.
+
+    Returns END when ``guardrail_blocked`` is True in state, otherwise
+    routes to the first successor node (linear MVP — single successor).
+    """
+    first_successor = successors[0] if successors else END
+
+    def _route(state: dict) -> str:
+        if state.get("guardrail_blocked"):
+            return END
+        return first_successor
+
+    return _route
 
 
 async def compile_workflow(

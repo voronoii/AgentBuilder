@@ -343,6 +343,7 @@ async def make_agent_node(
             return {
                 "node_outputs": {node_id: output},
                 "messages": [{"role": "assistant", "content": output}],
+                "final_output": output,
             }
         finally:
             await _close_adapters(mcp_adapters)

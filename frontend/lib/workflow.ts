@@ -8,7 +8,8 @@ export type NodeType =
   | 'llm'
   | 'agent'
   | 'knowledge_base'
-  | 'prompt_template';
+  | 'prompt_template'
+  | 'input_guardrail';
 
 export interface NodeData {
   type: NodeType;
@@ -36,6 +37,11 @@ export interface NodeData {
   // Prompt Template
   template?: string;
   variables?: string[];
+  // Input Guardrail
+  checks?: string[];
+  custom_rule?: string;
+  heuristic_threshold?: number;
+  action?: string;
 }
 
 export interface WorkflowRead {

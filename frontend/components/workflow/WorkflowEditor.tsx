@@ -9,13 +9,16 @@ import {
   ReactFlowProvider,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Activity, ChevronLeft, LayoutGrid, Play, Plug, Save } from 'lucide-react';
+import { Activity, ChevronLeft, LayoutGrid, Play, Plug, Rocket, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useSidebarStore } from '@/stores/sidebarStore';
 import { useWorkflowStore } from '@/stores/workflowStore';
+import { fetchAppByWorkflow, type PublishedApp } from '@/lib/apps';
+import { PublishModal } from '@/components/apps/PublishModal';
+import { PublishManageModal } from '@/components/apps/PublishManageModal';
 
 import { DeletableEdge } from './DeletableEdge';
 import { NodeConfigPanel } from './NodeConfigPanel';
@@ -25,6 +28,7 @@ import {
   AgentNode,
   ChatInputNode,
   ChatOutputNode,
+  InputGuardrailNode,
   KnowledgeBaseNode,
   LLMNode,
   PromptTemplateNode,
@@ -37,6 +41,7 @@ const nodeTypes: NodeTypes = {
   agent: AgentNode,
   knowledge_base: KnowledgeBaseNode,
   prompt_template: PromptTemplateNode,
+  input_guardrail: InputGuardrailNode,
 };
 
 const edgeTypes: EdgeTypes = {
@@ -64,12 +69,21 @@ function EditorInner({ workflowId }: { workflowId: string }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
   const [playgroundOpen, setPlaygroundOpen] = useState(false);
+  const [publishedApp, setPublishedApp] = useState<PublishedApp | null>(null);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showManageModal, setShowManageModal] = useState(false);
 
   useEffect(() => {
     loadWorkflow(workflowId)
       .then(() => setLoaded(true))
       .catch(() => setError('워크플로우를 불러올 수 없습니다.'));
   }, [workflowId, loadWorkflow]);
+
+  useEffect(() => {
+    if (workflowId) {
+      fetchAppByWorkflow(workflowId).then(setPublishedApp).catch(() => {});
+    }
+  }, [workflowId]);
 
   const handleManualSave = useCallback(async () => {
     setSaving(true);
@@ -188,6 +202,15 @@ function EditorInner({ workflowId }: { workflowId: string }) {
             <Save className="h-3.5 w-3.5" />
             {saving ? '저장 중...' : '저장'}
           </Button>
+
+          <div className="h-5 w-px bg-clay-border" />
+          <button
+            onClick={() => publishedApp ? setShowManageModal(true) : setShowPublishModal(true)}
+            className="flex items-center gap-1.5 rounded-lg border border-clay-accent px-3 py-1.5 text-sm font-medium text-clay-accent hover:bg-clay-accent hover:text-white transition-colors"
+          >
+            <Rocket className="h-4 w-4" />
+            {publishedApp ? '발행 관리' : '발행'}
+          </button>
         </div>
       </header>
 
@@ -209,9 +232,9 @@ function EditorInner({ workflowId }: { workflowId: string }) {
             edgeTypes={edgeTypes}
             defaultEdgeOptions={{ type: 'default' }}
             fitView
-            className="bg-cream"
+            className="bg-[#fafafa]"
           >
-            <Background color="#dad4c8" gap={20} size={1} />
+            <Background color="#c8c4bc" gap={20} size={1} />
             <Controls />
           </ReactFlow>
         </div>
@@ -227,6 +250,30 @@ function EditorInner({ workflowId }: { workflowId: string }) {
           />
         )}
       </div>
+
+      {showPublishModal && (
+        <PublishModal
+          workflowId={workflowId}
+          workflowName={workflowName}
+          onClose={() => setShowPublishModal(false)}
+          onPublished={(appId) => {
+            setShowPublishModal(false);
+            fetchAppByWorkflow(workflowId).then(setPublishedApp).catch(() => {});
+            window.open(`/chat/${appId}`, '_blank');
+          }}
+        />
+      )}
+      {showManageModal && publishedApp && (
+        <PublishManageModal
+          app={publishedApp}
+          onClose={() => setShowManageModal(false)}
+          onUnpublish={() => {
+            setShowManageModal(false);
+            setPublishedApp(null);
+          }}
+          onKeyRegenerated={setPublishedApp}
+        />
+      )}
     </div>
   );
 }

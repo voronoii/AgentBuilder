@@ -1,0 +1,70 @@
+<h2>워크플로우 배포(Publishing) — 접근 방식 비교</h2>
+<p class="subtitle">3가지 아키텍처 접근법과 트레이드오프</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>독립 서비스 분리 (Serving Layer)</h3>
+      <p>발행된 앱 전용 서버를 별도 컨테이너로 분리. 빌더 API와 서빙 API가 완전 독립.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>장점</h4><ul>
+          <li>빌더 장애가 발행 앱에 영향 없음</li>
+          <li>서빙 레이어만 독립 스케일링 가능</li>
+          <li>보안 경계 명확 (빌더 DB 접근 차단)</li>
+        </ul></div>
+        <div class="cons"><h4>단점</h4><ul>
+          <li>Docker Compose에 5번째 서비스 추가</li>
+          <li>워크플로우 정의 동기화 필요</li>
+          <li>개발/배포 복잡도 증가</li>
+          <li><strong>MVP에는 오버엔지니어링</strong></li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)" style="border: 2px solid #078a52;">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>기존 API 서버 확장 ⭐ 추천</h3>
+      <p>FastAPI 서버에 /apps/* 라우터 추가. 발행 설정은 DB, 실행은 기존 WorkflowRuntime 재사용.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>장점</h4><ul>
+          <li>기존 인프라 그대로 (Docker 4-service 유지)</li>
+          <li>WorkflowCompiler + WorkflowRuntime 100% 재사용</li>
+          <li>DB 모델 2~3개만 추가</li>
+          <li>프론트도 Next.js에 /chat/[appId] 페이지 추가만</li>
+        </ul></div>
+        <div class="cons"><h4>단점</h4><ul>
+          <li>빌더 트래픽과 서빙 트래픽이 같은 프로세스</li>
+          <li>향후 스케일 필요 시 분리 작업 필요</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>정적 내보내기 (Export-based)</h3>
+      <p>워크플로우를 자체 실행 가능한 패키지(Docker image 또는 Python script)로 내보내기.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>장점</h4><ul>
+          <li>완전 독립 실행 가능</li>
+          <li>사용자가 자체 인프라에 배포</li>
+        </ul></div>
+        <div class="cons"><h4>단점</h4><ul>
+          <li>구현 복잡도 극히 높음</li>
+          <li>MCP/KB 연결 재구성 필요</li>
+          <li>업데이트 반영 어려움</li>
+          <li><strong>MVP 범위 초과</strong></li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 2rem; padding: 1.2rem; background: #f8f7f5; border-radius: 12px; border: 1px solid #dad4c8;">
+  <h3 style="margin-top: 0;">⭐ B를 추천하는 이유</h3>
+  <p style="margin-bottom: 0;">현재 MVP는 단일 사용자 + Docker Compose 4-service 구조. 서빙 분리(A)는 멀티유저/고트래픽 Phase에서 검토해도 충분합니다. 기존 코드를 최대한 재사용하면서 <strong>PublishedApp 모델 + Conversation 모델 + /apps 라우터</strong> 추가만으로 배포 기능을 구현할 수 있습니다.</p>
+</div>

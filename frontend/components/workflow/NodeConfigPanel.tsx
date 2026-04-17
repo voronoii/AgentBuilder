@@ -297,6 +297,92 @@ function PromptTemplateConfig({ data, onChange }: { data: NodeData; onChange: (d
   );
 }
 
+const GUARDRAIL_CHECKS = [
+  { id: 'pii', label: 'PII (개인정보)' },
+  { id: 'tokens', label: 'Tokens / Passwords' },
+  { id: 'jailbreak', label: 'Jailbreak' },
+  { id: 'injection', label: 'Prompt Injection' },
+  { id: 'toxicity', label: 'Offensive Content' },
+  { id: 'custom', label: 'Custom Guardrail' },
+];
+
+function InputGuardrailConfig({ data, onChange }: { data: NodeData; onChange: (d: Partial<NodeData>) => void }) {
+  const providers = useProviders();
+  const currentProvider = providers.find((p) => p.id === data.provider);
+  const selectedChecks = data.checks ?? ['pii', 'tokens', 'jailbreak', 'injection', 'toxicity'];
+
+  const toggleCheck = (id: string, checked: boolean) => {
+    const next = checked ? [...selectedChecks, id] : selectedChecks.filter((c) => c !== id);
+    onChange({ checks: next });
+  };
+
+  return (
+    <div className="space-y-3">
+      <Field label="검사 항목">
+        <div className="space-y-1.5">
+          {GUARDRAIL_CHECKS.map(({ id, label }) => (
+            <label key={id} className="flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={selectedChecks.includes(id)}
+                onChange={(e) => toggleCheck(id, e.target.checked)}
+              />
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+      </Field>
+      {selectedChecks.includes('custom') && (
+        <Field label="커스텀 규칙 설명">
+          <Textarea
+            value={data.custom_rule || ''}
+            onChange={(e) => onChange({ custom_rule: e.target.value })}
+            rows={3}
+            placeholder="예: 금융 투자 조언이나 특정 종목 추천 차단"
+          />
+        </Field>
+      )}
+      <Field label="판정 LLM Provider">
+        <Select
+          value={data.provider || ''}
+          onChange={(e) => onChange({ provider: e.target.value, model: '' })}
+        >
+          <option value="">선택...</option>
+          {providers.filter((p) => p.enabled).map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </Select>
+      </Field>
+      <Field label="판정 LLM Model">
+        <Select
+          value={data.model || ''}
+          onChange={(e) => onChange({ model: e.target.value })}
+        >
+          <option value="">선택...</option>
+          {(currentProvider?.models || []).map((m) => (
+            <option key={m.id} value={m.id}>{m.name}</option>
+          ))}
+        </Select>
+      </Field>
+      <Field label={`휴리스틱 임계값 (${data.heuristic_threshold ?? 0.7})`}>
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.1}
+          value={data.heuristic_threshold ?? 0.7}
+          onChange={(e) => onChange({ heuristic_threshold: parseFloat(e.target.value) })}
+          className="w-full"
+        />
+        <div className="flex justify-between text-[10px] text-warmSilver">
+          <span>엄격 (0.0)</span>
+          <span>관대 (1.0)</span>
+        </div>
+      </Field>
+    </div>
+  );
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -350,6 +436,9 @@ export function NodeConfigPanel({ node }: { node: Node }) {
         )}
         {(nodeType === 'prompt_template') && (
           <PromptTemplateConfig data={data} onChange={handleChange} />
+        )}
+        {(nodeType === 'input_guardrail') && (
+          <InputGuardrailConfig data={data} onChange={handleChange} />
         )}
         {(nodeType === 'chat_input' || nodeType === 'chat_output') && (
           <p className="text-xs text-warmSilver">

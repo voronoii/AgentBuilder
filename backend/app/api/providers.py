@@ -102,6 +102,8 @@ async def list_providers(
             "name": "OpenRouter",
             "enabled": bool(openrouter_key),
             "models": [
+                {"id": "openai/gpt-5.4", "name": "GPT-5.4 (OpenAI)"},
+                {"id": "openai/gpt-5.4-mini", "name": "GPT-5.4 Mini (OpenAI)"},
                 {"id": "openai/gpt-5.2", "name": "GPT-5.2 (OpenAI)"},
                 {"id": "openai/gpt-4.1-mini", "name": "GPT-4.1 Mini (OpenAI)"},
                 {"id": "openai/gpt-4.1-nano", "name": "GPT-4.1 Nano (OpenAI)"},

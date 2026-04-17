@@ -11,12 +11,12 @@ const config: Config = {
         // Clay semantic tokens (mapped to palette values below)
         'clay-accent': '#7c3aed',   // = violet-600 (VAIV brand)
         'clay-border': '#dad4c8',   // = oat.DEFAULT
-        'clay-surface': '#faf9f7',  // = cream
+        'clay-surface': '#fafafa',  // cool white (패널/카드 배경)
         'clay-text': '#55534e',     // = warmCharcoal
-        'clay-bg': '#faf9f7',
+        'clay-bg': '#fafafa',       // cool white (body 배경)
         'clay-muted': '#9f9b93',
         // Clay base — see DESIGN.md §2
-        cream: '#faf9f7',
+        cream: '#fafafa',
         clayBlack: '#000000',
         oat: {
           DEFAULT: '#dad4c8',

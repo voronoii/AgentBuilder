@@ -17,16 +17,20 @@ def _merge_dicts(a: dict, b: dict) -> dict:
 class WorkflowState(TypedDict):
     """LangGraph state schema for MVP string-only inter-node data transfer.
 
-    - user_input   : raw text from the ChatInput node.
-    - messages     : accumulated HumanMessage / AIMessage objects for LLM context
-                     (list with reducer that appends, so parallel branches are safe).
-    - node_outputs : mapping of node_id → last string output of that node.
-                     Uses _merge_dicts reducer so parallel branches are safe.
-    - final_output : populated by the node immediately before ChatOutput; the
-                     ChatOutput node copies this to the SSE stream.
+    - user_input       : raw text from the ChatInput node.
+    - messages         : accumulated HumanMessage / AIMessage objects for LLM context
+                         (list with reducer that appends, so parallel branches are safe).
+    - node_outputs     : mapping of node_id → last string output of that node.
+                         Uses _merge_dicts reducer so parallel branches are safe.
+    - final_output     : populated by the node immediately before ChatOutput; the
+                         ChatOutput node copies this to the SSE stream.
+    - guardrail_blocked: set to True by guardrail nodes when input is rejected.
+                         Used by compiler conditional edges to route to END,
+                         skipping all downstream processing nodes.
     """
 
     user_input: str
     messages: Annotated[list, operator.add]
     node_outputs: Annotated[dict, _merge_dicts]  # {node_id: str}
     final_output: str
+    guardrail_blocked: bool

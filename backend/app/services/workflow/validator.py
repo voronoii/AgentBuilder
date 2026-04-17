@@ -21,6 +21,7 @@ _REQUIRED_FIELDS: dict[str, list[str]] = {
     "agent": ["provider", "model"],
     "knowledge_base": ["knowledgeBaseId"],
     "prompt_template": ["template"],
+    "input_guardrail": ["provider", "model"],
 }
 
 _VALID_NODE_TYPES = {
@@ -30,6 +31,7 @@ _VALID_NODE_TYPES = {
     "agent",
     "knowledge_base",
     "prompt_template",
+    "input_guardrail",
 }
 
 

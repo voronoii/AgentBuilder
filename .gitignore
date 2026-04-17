@@ -12,6 +12,9 @@ htmlcov/
 dist/
 build/
 
+# Docs
+docs/
+
 # Node
 node_modules/
 .next/

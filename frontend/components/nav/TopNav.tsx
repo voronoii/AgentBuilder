@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Settings, Workflow, Wrench } from 'lucide-react';
+import { AppWindow, BookOpen, Settings, Workflow, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const tabs = [
   { href: '/knowledge', label: '지식', icon: BookOpen },
   { href: '/workflows', label: '워크플로우', icon: Workflow },
   { href: '/tools', label: '도구', icon: Wrench },
+  { href: '/apps', label: '앱', icon: AppWindow },
   { href: '/settings', label: '설정', icon: Settings },
 ];
 

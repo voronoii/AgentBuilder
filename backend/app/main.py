@@ -7,11 +7,13 @@ from typing import AsyncIterator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.apps import router as apps_router
 from app.api.health import router as health_router
 from app.api.knowledge import router as knowledge_router
 from app.api.mcp import router as mcp_router
 from app.api.providers import router as providers_router
 from app.api.runs import routers as run_routers
+from app.api.serving import router as serving_router
 from app.api.settings import router as settings_router
 from app.api.workflow import router as workflow_router
 from app.core.config import APP_VERSION, get_settings
@@ -95,6 +97,8 @@ def create_app() -> FastAPI:
     app.include_router(workflow_router)
     app.include_router(providers_router)
     app.include_router(settings_router)
+    app.include_router(apps_router)
+    app.include_router(serving_router)
     for router in run_routers:
         app.include_router(router)
 

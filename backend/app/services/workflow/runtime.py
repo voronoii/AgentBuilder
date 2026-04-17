@@ -50,6 +50,7 @@ class WorkflowRuntime:
         edges: list[dict],
         user_input: str,
         session_factory: async_sessionmaker,
+        messages: list[dict] | None = None,
     ) -> None:
         """Create a background asyncio.Task for the given run and register it."""
         queue: asyncio.Queue = asyncio.Queue()
@@ -65,6 +66,7 @@ class WorkflowRuntime:
                 user_input=user_input,
                 queue=queue,
                 session_factory=session_factory,
+                messages=messages,
             ),
             name=f"run-{run_id}",
         )
@@ -103,6 +105,7 @@ async def _execute_workflow(
     user_input: str,
     queue: asyncio.Queue,
     session_factory: async_sessionmaker,
+    messages: list[dict] | None = None,
 ) -> None:
     """Compile the graph, stream events, persist to DB, signal SSE stream end."""
     # Import here to avoid circular imports at module load time.
@@ -116,33 +119,53 @@ async def _execute_workflow(
             _log.info("runtime: compiling workflow for run_id=%s", run_id)
             compiled = await compile_workflow(nodes, edges, session)
 
+            # Identify guardrail node IDs — their internal LLM judge
+            # tokens must be excluded from collected_tokens and SSE stream.
+            _guardrail_node_ids: set[str] = {
+                n["id"] for n in nodes
+                if n.get("data", {}).get("type") == "input_guardrail"
+            }
+
             # --- Initial state ----------------------------------------------
             initial_state: dict[str, Any] = {
                 "user_input": user_input,
-                "messages": [],
+                "messages": messages or [],
                 "node_outputs": {},
                 "final_output": "",
+                "guardrail_blocked": False,
             }
 
             # --- Stream events with timeout ---------------------------------
             collected_tokens: list[str] = []
             final_output: str = ""
+            state_final_output: str = ""  # from graph state (guardrail block, etc.)
             pending_events: int = 0  # count uncommitted events for batching
 
             async def _stream() -> None:
-                nonlocal final_output, pending_events
+                nonlocal final_output, pending_events, state_final_output
                 async for raw_event in compiled.astream_events(initial_state, version="v2"):
                     mapped = _map_event(raw_event)
                     if mapped is None:
                         continue
 
                     # Collect LLM tokens for final output reconstruction.
+                    # Skip tokens from guardrail LLM judge — they are internal
+                    # check results (e.g. "NO ...explanation") not meant for users.
                     if mapped["event_type"] == "llm_token":
+                        if mapped.get("node_id") in _guardrail_node_ids:
+                            continue
                         token = mapped.get("payload", {}).get("token", "")
                         if token:
                             collected_tokens.append(token)
                         else:
                             continue
+
+                    # Track final_output from non-LLM paths (guardrail block, etc.)
+                    # node_end and workflow_end events carry final_output in payload.
+                    if mapped["event_type"] in ("node_end", "workflow_end"):
+                        output = mapped.get("payload", {}).get("output", "")
+                        if output:
+                            state_final_output = output
 
                     # Persist to DB (batched commit for performance)
                     await repo.add_event(
@@ -169,7 +192,12 @@ async def _execute_workflow(
             await asyncio.wait_for(_stream(), timeout=MAX_RUN_TIMEOUT_SECONDS)
 
             # --- Determine final output -------------------------------------
-            final_output = "".join(collected_tokens) if collected_tokens else ""
+            # Prefer state-based final_output (explicitly set by agent/LLM
+            # nodes); fall back to collected tokens for backwards compat.
+            final_output = (
+                state_final_output if state_final_output
+                else "".join(collected_tokens)
+            )
 
             if final_output:
                 end_event = {

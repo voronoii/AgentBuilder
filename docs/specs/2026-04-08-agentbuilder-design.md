@@ -37,7 +37,9 @@
 | 분기/루프 노드 (If-Else, Loop)                      | 조건 엣지 UX 복잡도    | Phase 2  |
 | Code / Python Interpreter 노드                  | 샌드박싱 보안 이슈      | Phase 3  |
 | HTTP Request 노드                               | MCP로 대체 가능      | Phase 2  |
-| Structured Output / Guardrails / Smart Router | 편의 기능           | Phase 2+ |
+| Structured Output / Smart Router              | 편의 기능           | Phase 2+ |
+| Guardrails (입력/출력)                           | §8.5 — 입력 가드레일 **구현 완료**, 출력 가드레일 미구현 | Phase 2  |
+| 에이전트 가드레일 (행동 검증)                          | 시나리오 축적 필요       | Phase 3+ |
 | 워크플로우 생성 Assistant Chat (우측 패널)               | MVP 이후          | Phase 2  |
 | 워크플로우 버전 관리 / 협업                              | 단일 사용자          | Phase 3  |
 | 워크플로우 템플릿 갤러리                                 | MVP 이후          | Phase 2  |
@@ -615,6 +617,174 @@ class RunEvent:
 - **동시성**: 글로벌 `asyncio.Semaphore(N)` (기본 N=3) — 동시 실행 워크플로우 수 제한 (GPU/API rate limit 보호)
 - **재시작 복구**: 서버 재시작 시 `running` 상태 run은 모두 `**failed`로 마크**하고 에러에 "server restart" 기록. 자동 재시도 ❌
 - **프로세스 로컬 상태**: `dict[run_id, (asyncio.Task, asyncio.Queue)]` — 단일 프로세스 가정. 향후 워커 멀티프로세스 시 Redis pub/sub 등으로 교체 (Phase 2+)
+
+---
+
+## 8.5. 가드레일 (Guardrails)
+
+> **Phase 2 기능.** Langflow 벤치마킹 기반 설계.
+> **구현 상태 (2026-04-16):** 입력 가드레일 노드 **구현 완료** (백엔드 + 프론트엔드). 출력 가드레일은 미구현.
+
+### 8.5.1 개요
+
+워크플로우 내에서 LLM 입출력의 안전성을 검증하는 노드. Langflow를 벤치마킹했으나, Langflow가 **입력 가드레일만** 제공하는 것과 달리 AgentBuilder는 **출력 가드레일도 노드로 제공**하여 차별화.
+
+| 가드레일 유형 | Langflow | AgentBuilder (Phase 2) | 구현 상태 |
+|-------------|----------|----------------------|---------|
+| 입력 가드레일 | ✅ GuardrailsComponent | ✅ Input Guardrail 노드 | ✅ **완료** (2026-04-16) |
+| 출력 가드레일 | ❌ 없음 | ✅ Output Guardrail 노드 | ⬜ 미구현 |
+| 에이전트 가드레일 | ❌ 없음 | ❌ Phase 3+ 후보 (시나리오 축적 필요) | ⬜ Phase 3+ |
+| 툴 가드레일 | ❌ 없음 | ❌ 입출력 가드레일과 역할 중복, 별도 노드 불필요 | — |
+
+### 8.5.2 감지 아키텍처 — 2단계 파이프라인
+
+Langflow 패턴을 채택하되, **정규식 1차 필터를 PII/Tokens까지 확장**하여 비용 절감 + 정확도 향상.
+
+```
+사용자 입력 / LLM 응답
+    │
+    ▼
+┌─────────────────────────────────┐
+│  Stage 1: 휴리스틱 (정규식)        │  ← 무료, <1ms
+│  가중치 패턴 매칭 → 점수 누적       │
+│  threshold 초과 → 즉시 차단        │
+└──────────┬──────────────────────┘
+           │ 통과
+           ▼
+┌─────────────────────────────────┐
+│  Stage 2: LLM-as-Judge          │  ← 비용 발생, ~1-3초
+│  구조화된 프롬프트 → YES/NO 판정    │
+│  구분자 기반 입력 격리              │
+└──────────┬──────────────────────┘
+           │
+    Pass → 다음 노드 / Fail → 워크플로우 종료 (에러 메시지)
+```
+
+**Langflow와의 차이점:**
+- Langflow는 Jailbreak/Injection에만 정규식 사전 필터 적용. PII, Tokens 등은 LLM 판정만 사용
+- AgentBuilder는 PII(주민번호, 카드번호 패턴)와 Tokens(API 키 패턴)에도 **정규식 1차 필터 추가** → 비용 절감 + 명확한 패턴 즉시 포착
+
+### 8.5.3 Input Guardrail 노드
+
+- **역할**: 사용자 입력이 LLM에 도달하기 전 필터링
+- **캔버스 배치**: `Chat Input → [Input Guardrail] → LLM/Agent`
+- **설정**:
+  - 검사 항목 선택 (멀티셀렉트): PII, Tokens/Passwords, Jailbreak, Offensive Content, Malicious Code, Prompt Injection
+  - 커스텀 가드레일 (자연어 규칙 설명)
+  - 판정용 LLM 선택 (Provider + Model) — 워크플로우 메인 LLM과 별도
+  - 휴리스틱 임계값 (0.0~1.0, 기본 0.7)
+  - 차단 시 동작: block (워크플로우 종료) / warn (경고 후 통과)
+- **출력**:
+  - Phase 2 초기: 통과 시 다음 노드 전달, 차단 시 워크플로우 종료 + 에러 메시지
+  - Phase 2 후기 (분기 노드 구현 후): Pass/Fail 듀얼 출력 분기
+- **LangGraph 매핑**: 함수 노드 (차단 시 `final_output`에 거부 메시지 설정 + 조기 종료)
+
+### 8.5.4 Output Guardrail 노드 (Langflow 대비 차별점)
+
+- **역할**: LLM 응답이 사용자에게 전달되기 전 필터링
+- **캔버스 배치**: `LLM/Agent → [Output Guardrail] → Chat Output`
+- **설정**:
+  - 검사 항목 선택 (멀티셀렉트): Harmful Response, PII Exposure, Format Validation, 커스텀 가드레일
+  - 판정용 LLM 선택
+  - 차단 시 동작: block / warn / mask (PII 마스킹 후 통과)
+- **Langflow에 없는 검사 항목**:
+  - **Harmful Response**: LLM이 생성한 유해/부적절 응답 차단
+  - **PII Exposure**: LLM 응답에서 민감 정보 마스킹 (정규식 + LLM)
+  - **Format Validation**: JSON 스키마, 길이 제한 등 규칙 기반 형식 검증
+
+### 8.5.5 에이전트 가드레일 (Phase 3+ 후보)
+
+에이전트의 **행동/과정**을 검증하는 가드레일. 입출력 가드레일(텍스트 내용 검사)과는 검사 차원이 다름.
+
+**후보 시나리오** (실제 사용자 니즈 축적 후 결정):
+- 특정 도구를 반드시 사용했는지 확인 (예: 법령 에이전트 → 법령 검색 도구 호출 필수)
+- 특정 도구를 절대 사용하지 않았는지 확인
+- 에이전트 루프 전체에 걸친 정책 검증
+
+**Phase 3+로 미루는 이유**:
+- 구체적 사용 시나리오가 아직 불충분
+- Agent 노드의 기존 설정(`max_iterations`, 도구 선택)이 기본적 제어 제공
+- 입출력 가드레일만으로도 대부분의 안전성 요구사항 충족
+- 실제 사용자가 Agent 노드를 활발히 사용한 후 니즈 명확화
+
+### 8.5.6 툴 가드레일 (별도 노드 불필요)
+
+**결정: 별도 노드로 제공하지 않음.** 입출력 가드레일과 역할이 상당 부분 중복.
+
+- 툴 입력 검증 (LLM → 도구 인자) → 입력 가드레일이 사전에 위험 입력 차단으로 대체
+- 툴 출력 필터링 (도구 결과 → LLM) → 출력 가드레일이 최종 응답에서 민감 정보 마스킹으로 대체
+- 도구 호출 제한/허용 → Agent 노드의 기존 속성 (`max_iterations`, TOOLS 선택)으로 대체
+
+필요 시 Phase 3+에서 Agent 노드 속성으로 세분화 (도구별 호출 횟수 제한, 인자 검증 규칙 등).
+
+### 8.5.7 구현 구조 (Phase 2)
+
+```
+backend/app/
+  nodes/
+    input_guardrail.py          # ✅ 입력 가드레일 노드
+    output_guardrail.py         # ⬜ 출력 가드레일 노드
+  services/
+    guardrail/
+      __init__.py               # ✅
+      checks/
+        __init__.py             # ✅
+        pii.py                  # ✅ PII 감지 (정규식 + LLM)
+        injection.py            # ✅ 프롬프트 인젝션 (휴리스틱 + LLM)
+        jailbreak.py            # ✅ 탈옥 감지 (휴리스틱 + LLM)
+        toxicity.py             # ✅ 유해 콘텐츠 (LLM)
+        tokens.py               # ✅ 토큰/비밀번호 (정규식 + LLM)
+        custom.py               # ✅ 커스텀 규칙 (LLM)
+        format_validator.py     # ⬜ 형식 검증 (규칙 기반, 출력 가드레일 전용)
+      heuristic.py              # ✅ 가중치 정규식 스코어링 엔진
+      llm_judge.py              # ✅ LLM-as-judge 공통 로직 (프롬프트 구성, 응답 파싱, 구분자 방어)
+      models.py                 # ✅ GuardrailResult, CheckType enum 등
+
+frontend/
+  lib/workflow.ts               # ✅ NodeType에 'input_guardrail' 추가, NodeData 필드 추가
+  components/workflow/
+    nodes/nodeStyles.ts         # ✅ ShieldCheck 아이콘, 주황 dot
+    nodes/BaseNode.tsx          # ✅ InputGuardrailNode 래퍼 + FieldPreview
+    WorkflowEditor.tsx          # ✅ nodeTypes 맵에 input_guardrail 등록
+    NodeConfigPanel.tsx         # ✅ InputGuardrailConfig (체크 멀티셀렉트, LLM 선택, 임계값 슬라이더)
+    Sidebar.tsx                 # ✅ 컴포넌트 팔레트에 노드 추가
+
+backend/app/services/workflow/
+  validator.py                  # ✅ _VALID_NODE_TYPES, _REQUIRED_FIELDS에 input_guardrail 추가
+  (registry.py)                 # ✅ _SUPPORTED_TYPES에 input_guardrail 추가 + 팩토리 분기
+```
+
+### 8.5.8 데이터 모델
+
+```python
+class NodeType(StrEnum):
+    # ... 기존 6종 ...
+    INPUT_GUARDRAIL = "input_guardrail"
+    OUTPUT_GUARDRAIL = "output_guardrail"
+```
+
+노드 설정 (`data` 필드):
+```python
+# Input Guardrail
+{
+    "checks": ["pii", "injection", "jailbreak", "toxicity", "tokens"],
+    "custom_rule": "금융 투자 조언이나 특정 종목 추천 차단",
+    "heuristic_threshold": 0.7,
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "action": "block"  # "block" | "warn"
+}
+
+# Output Guardrail
+{
+    "checks": ["harmful_response", "pii_exposure", "format_validation"],
+    "custom_rule": "응답에 출처/근거 없는 주장 차단",
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "action": "block",  # "block" | "warn" | "mask"
+    "format_schema": null  # JSON 스키마 (format_validation용, optional)
+}
+```
 
 ---
 
@@ -1208,6 +1378,35 @@ volumes:
 - [x] **이모지 0건** — 전체 프론트엔드 소스에서 이모지 완전 제거 확인
 - [x] **빌드 성공** — `npm run build` zero errors
 
+### Milestone 6 — 워크플로우 배포(Publishing)
+
+> 상세 스펙: `docs/superpowers/specs/2026-04-13-publishing-design.md`
+> 구현 플랜: `docs/superpowers/plans/2026-04-13-publishing.md`
+
+**백엔드**
+- [x] PublishedApp / Conversation / ConversationMessage 모델 + Alembic 마이그레이션 (`m6_001`)
+- [x] Pydantic 스키마: `app.py` (AppCreate/AppRead/AppConfig), `serving.py` (OpenAI 호환 요청/응답)
+- [x] 리포지토리: `AppRepository`, `ConversationRepository`
+- [x] 빌더 API: `/apps` CRUD + regenerate-key + toggle + config + api-key (내부용)
+- [x] 서빙 API: OpenAI 호환 `POST /v1/chat/completions` (스트리밍/비스트리밍) + `/v1/conversations` CRUD
+- [x] API Key 인증 (`_resolve_app` 의존성 — Bearer 토큰 → PublishedApp 식별)
+- [x] `WorkflowRuntime.start_run()` — `messages: list[dict] | None` 파라미터 추가 (대화 히스토리 주입)
+- [x] 에러 코드 추가: `APP_NOT_FOUND`, `APP_INACTIVE`, `APP_ALREADY_EXISTS`, `INVALID_API_KEY`, `CONVERSATION_NOT_FOUND`, `CONVERSATION_NOT_OWNED`
+
+**프론트엔드**
+- [x] TopNav "앱" 탭 추가 (5탭: 지식/워크플로우/도구/앱/설정)
+- [x] API 클라이언트 `lib/apps.ts` — 8개 함수
+- [x] 앱 목록 페이지 (`/apps`) — 카드 목록, 빈 상태, 토글/삭제
+- [x] 발행 설정 모달 (`PublishModal`) — 이름, 설명, 환영 메시지, placeholder
+- [x] 발행 관리 모달 (`PublishManageModal`) — 웹앱 URL, API 엔드포인트, cURL 예시, 키 재발급
+- [x] 워크플로우 에디터 툴바에 "🚀 발행" 버튼 추가
+- [x] 독립 웹앱 채팅 UI (`/chat/[appId]`) — 좌측 대화 목록 + 우측 채팅, SSE 스트리밍, 마크다운 렌더링
+- [x] Next.js API Route 프록시 (`/api/chat/[appId]`) — API Key 서버사이드 주입, SSE 릴레이
+
+**대화 세션 관리**
+- [x] 메시지 리플레이 방식 — ConversationMessage에서 히스토리 로드 → LLM에 전달
+- [ ] **TBD**: LangGraph 체크포인터 연동 (`langgraph-checkpoint-postgres`) — Phase 2
+
 ---
 
 ## 15. 미해결 / TBD
@@ -1234,6 +1433,9 @@ volumes:
 | 15    | **CORS origins 관리 방식**                   | env var JSON 리스트 → Settings. Prod에서 와일드카드 금지 (§11.3)                                                                                                       |
 | 16    | **에러 코드 enum 구체화**                       | `app/core/errors.py`에 도메인별 코드 정의. M1 첫 엔드포인트 작성 시 착수                                                                                                       |
 | 17    | **Dockerfile `ARG` 규칙**                  | `NEXT_PUBLIC_`* 변수는 Next.js 빌드 타임에 번들에 박힘. `frontend/Dockerfile` build 스테이지에 `ARG <VAR>` + `ENV <VAR>=${<VAR>}` 선언 필수. 새 환경변수 추가 시 마다 체크 (M1 실사용 테스트에서 발견) |
+| ~~18~~ | ~~**가드레일 Phase 2 구현 범위 확정**~~           | **결정 완료 + 입력 가드레일 구현 완료 (2026-04-16).** §8.5 설계대로 구현. 입력 가드레일 6종 체크(pii·tokens·jailbreak·injection·toxicity·custom). 출력 가드레일(3종)은 미구현 |
+| ~~19~~ | ~~**가드레일 판정용 LLM 비용 최적화 전략**~~         | **결정 완료.** 정규식 1차 필터 PII/Tokens까지 확장 구현. gpt-4o-mini 기본. Fail-fast(첫 위반 즉시 중단) 구현. temperature=0.0 고정 |
+| 20    | **가드레일 Pass/Fail 분기 UX**                 | Phase 2 초기: 차단 시 워크플로우 종료 (구현 완료). 분기/루프 노드 구현 후 듀얼 출력(Pass/Fail) 분기로 확장 예정 |
 
 
 ---
@@ -1326,6 +1528,14 @@ volumes:
 | 2026-04-13 | 사용자 메시지 색상 `bg-blue-600` → `bg-clayBlack`                                        | Clay 디자인 시스템과 일관된 색상. 상업 플랫폼 톤 |
 | 2026-04-13 | "환경변수" 탭 → "설정"으로 리네임                                                            | 간결한 라벨. 기능 확장 가능성 (향후 일반 설정 추가 시) |
 | 2026-04-13 | Clay Elevation 토큰 4단계 추가                                                            | `shadow-clay-0`(Flat) ~ `shadow-clay-2`(Hover) + `shadow-clay-focus`. PDF 디자인 시스템 기반 |
+| 2026-04-15 | 가드레일 설계 — Langflow 벤치마킹 기반                                                          | Langflow 소스코드 분석 완료. LLM-as-judge + 휴리스틱 2단계 파이프라인 채택. §8.5에 상세 설계 |
+| 2026-04-15 | 가드레일 범위: 입력 + 출력 노드 (Phase 2), 에이전트 가드레일 (Phase 3+)                               | Langflow는 입력만 제공 → 출력 가드레일이 AgentBuilder 차별점. 에이전트 가드레일은 시나리오 축적 후 결정 |
+| 2026-04-15 | 툴 가드레일은 별도 노드 불필요                                                                   | 입출력 가드레일 + Agent 노드 기존 속성과 역할 중복. 필요 시 Phase 3+에서 Agent 속성으로 세분화 |
+| 2026-04-15 | PII/Tokens에 정규식 1차 필터 추가 (Langflow 대비 개선)                                            | Langflow는 Jailbreak/Injection에만 휴리스틱 적용. AgentBuilder는 PII(주민번호, 카드번호), Tokens(API 키) 패턴도 정규식으로 사전 포착 → 비용 절감 |
+| 2026-04-16 | **입력 가드레일 노드 구현 완료 (백엔드)**                                                              | `services/guardrail/` 모듈 신설: models.py(CheckType·GuardrailResult), heuristic.py(가중치 정규식), llm_judge.py(LLM-as-judge + 구분자 방어), checks/ 6개(pii·tokens·jailbreak·injection·toxicity·custom). `nodes/input_guardrail.py` LangGraph 노드. Fail-fast 전략 + 차단 시 final_output 조기 종료 |
+| 2026-04-16 | **입력 가드레일 노드 구현 완료 (프론트엔드)**                                                            | workflow.ts에 NodeType·NodeData 확장. nodeStyles.ts(ShieldCheck 주황 dot). BaseNode.tsx(래퍼+미리보기). NodeConfigPanel.tsx(체크 멀티셀렉트, 판정 LLM Provider/Model 선택, 임계값 슬라이더 0.0~1.0). WorkflowEditor.tsx·Sidebar.tsx에 등록 |
+| 2026-04-16 | validator.py에 input_guardrail 타입 등록                                                         | `_VALID_NODE_TYPES` + `_REQUIRED_FIELDS`(provider, model) 추가. 초기 누락으로 "알 수 없는 노드 타입" 에러 발생 → 수정 완료 |
+| 2026-04-16 | Langflow `GuardrailsComponent` 소스코드 분석 완료                                                   | `src/lfx/src/lfx/components/llm_operations/guardrails.py` (PR #11451). 6종 체크 + 가중치 휴리스틱 + LLM-as-judge YES/NO 파싱 + 구분자 방어 패턴 확인. AgentBuilder 구현의 직접적 레퍼런스로 활용 |
 
 
 ---
@@ -1344,4 +1554,4 @@ volumes:
 
 ---
 
-**상태**: MVP 전체 마일스톤 (M0~M5) 완료. Post-MVP 개선 진행 중 (2026-04-13~): vLLM 동적 모델 감지, 문서 삭제 기능, 마크다운 렌더링, 실행로그 토큰 병합. Phase 2 확장 후보: 멀티유저/인증, 분기/루프 노드, 워크플로우 import/export, 시크릿 암호화, i18n, Deep Agent 노드.
+**상태**: MVP 전체 마일스톤 (M0~M5) 완료. Post-MVP 개선 진행 중 (2026-04-13~). Phase 2 진행 중: **입력 가드레일 노드 구현 완료** (2026-04-16, §8.5). 남은 Phase 2 후보: 출력 가드레일 노드, 멀티유저/인증, 분기/루프 노드, 워크플로우 import/export, 시크릿 암호화, i18n, Deep Agent 노드.
