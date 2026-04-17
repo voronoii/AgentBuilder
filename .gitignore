@@ -14,6 +14,7 @@ build/
 
 # Docs
 docs/
+.md
 
 # Node
 node_modules/
