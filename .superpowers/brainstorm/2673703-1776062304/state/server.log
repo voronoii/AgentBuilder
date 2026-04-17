@@ -1,6 +1,0 @@
-{"type":"server-started","port":62398,"host":"0.0.0.0","url_host":"localhost","url":"http://localhost:62398","screen_dir":"/DATA3/users/mj/AgentBuilder/.superpowers/brainstorm/2673703-1776062304/content","state_dir":"/DATA3/users/mj/AgentBuilder/.superpowers/brainstorm/2673703-1776062304/state"}
-{"type":"screen-added","file":"/DATA3/users/mj/AgentBuilder/.superpowers/brainstorm/2673703-1776062304/content/approach-comparison.html"}
-{"source":"user-event","type":"click","text":"B\n    \n      기존 API 서버 확장 ⭐ 추천\n      FastAPI 서버에 /apps/* 라우터 추가. 발행 설정은 DB, 실행은 기존 WorkflowRuntime 재사용.\n      \n        장점\n          기존 인프라 그대로 (Docker 4-service 유지)\n          WorkflowCompiler + WorkflowRuntime 100% 재사용\n          DB 모델 2~3개만 추가\n          프론트도 Next.js에 /chat/[appId] 페이지 추가만\n        \n        단점\n          빌더 트래픽과 서빙 트래픽이 같은 프로세스\n          향후 스케일 필요 시 분리 작업 필요","choice":"b","id":null,"timestamp":1776062954799}
-{"type":"screen-added","file":"/DATA3/users/mj/AgentBuilder/.superpowers/brainstorm/2673703-1776062304/content/frontend-pages.html"}
-{"type":"screen-added","file":"/DATA3/users/mj/AgentBuilder/.superpowers/brainstorm/2673703-1776062304/content/waiting.html"}
-{"type":"server-stopped","reason":"idle timeout"}
