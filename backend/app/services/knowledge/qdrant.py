@@ -1,0 +1,105 @@
+from __future__ import annotations
+
+import asyncio
+from typing import Any
+
+from qdrant_client import QdrantClient
+from qdrant_client.http import models as qm
+
+from app.core.errors import AppError, ErrorCode
+
+
+class QdrantStore:
+    def __init__(self, url: str) -> None:
+        self._client = QdrantClient(url=url)
+
+    async def _run(self, fn: Any, *args: Any, **kwargs: Any) -> Any:
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, lambda: fn(*args, **kwargs))
+
+    async def ping(self) -> None:
+        try:
+            await self._run(self._client.get_collections)
+        except Exception as exc:
+            raise AppError(
+                status_code=503,
+                code=ErrorCode.KNOWLEDGE_QDRANT_UNAVAILABLE,
+                detail=f"qdrant unavailable: {exc}",
+            ) from exc
+
+    async def create_collection(self, name: str, *, dimension: int) -> None:
+        await self._run(
+            self._client.recreate_collection,
+            collection_name=name,
+            vectors_config=qm.VectorParams(size=dimension, distance=qm.Distance.COSINE),
+        )
+
+    async def delete_collection(self, name: str) -> None:
+        await self._run(self._client.delete_collection, collection_name=name)
+
+    async def upsert(self, name: str, *, points: list[dict[str, Any]]) -> None:
+        qpoints = [
+            qm.PointStruct(id=p["id"], vector=p["vector"], payload=p.get("payload", {}))
+            for p in points
+        ]
+        await self._run(self._client.upsert, collection_name=name, points=qpoints)
+
+    async def _collection_exists(self, name: str) -> bool:
+        collections = await self._run(self._client.get_collections)
+        return any(c.name == name for c in collections.collections)
+
+    async def delete_by_document(self, name: str, *, document_id: str) -> None:
+        if not await self._collection_exists(name):
+            return
+        await self._run(
+            self._client.delete,
+            collection_name=name,
+            points_selector=qm.FilterSelector(
+                filter=qm.Filter(
+                    must=[
+                        qm.FieldCondition(key="document_id", match=qm.MatchValue(value=document_id))
+                    ]
+                )
+            ),
+        )
+
+    async def ensure_collection(self, name: str, *, dimension: int) -> None:
+        """컬렉션이 없으면 생성, 있으면 그대로 둔다."""
+        if not await self._collection_exists(name):
+            await self.create_collection(name, dimension=dimension)
+
+    async def scroll_by_document(
+        self, name: str, *, document_id: str, limit: int = 3
+    ) -> list[dict[str, Any]]:
+        if not await self._collection_exists(name):
+            return []
+        result = await self._run(
+            self._client.scroll,
+            collection_name=name,
+            scroll_filter=qm.Filter(
+                must=[
+                    qm.FieldCondition(key="document_id", match=qm.MatchValue(value=document_id))
+                ]
+            ),
+            limit=limit,
+            with_payload=True,
+            with_vectors=False,
+        )
+        points, _ = result
+        return [{"id": p.id, "payload": p.payload or {}} for p in points]
+
+    async def search(
+        self, name: str, *, query: list[float], top_k: int = 5, score_threshold: float | None = None
+    ) -> list[dict[str, Any]]:
+        # qdrant-client >=1.14: search() removed, use query_points()
+        if not await self._collection_exists(name):
+            return []
+        result = await self._run(
+            self._client.query_points,
+            collection_name=name,
+            query=query,
+            limit=top_k,
+            score_threshold=score_threshold,
+            with_payload=True,
+        )
+        return [{"id": h.id, "score": h.score, "payload": h.payload or {}} for h in result.points]
