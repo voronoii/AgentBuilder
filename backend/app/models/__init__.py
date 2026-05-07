@@ -1,6 +1,7 @@
 from app.models.base import Base
 from app.models.app import PublishedApp
 from app.models.conversation import Conversation, ConversationMessage
+from app.models.hook import HookExecution
 from app.models.knowledge import Document, DocumentStatus, KnowledgeBase
 from app.models.mcp import MCPServer, MCPTransport
 from app.models.run import RunEvent, RunStatus, WorkflowRun
@@ -12,6 +13,7 @@ __all__ = [
     "ConversationMessage",
     "Document",
     "DocumentStatus",
+    "HookExecution",
     "KnowledgeBase",
     "MCPServer",
     "MCPTransport",

@@ -348,5 +348,16 @@ def _map_event(raw: dict[str, Any]) -> dict[str, Any] | None:
             "payload": {"output": final_output},
         }
 
+    # Hook events — dispatched via stream_writer in agent_node hook loop.
+    # LangGraph on_custom_event carries these when using dispatch_custom_event.
+    if event_name == "on_custom_event":
+        custom_name = raw.get("name", "")
+        if custom_name in ("hook_start", "hook_result"):
+            return {
+                "event_type": custom_name,
+                "node_id": data.get("node_id"),
+                "payload": data,
+            }
+
     # All other events (on_chain_stream, on_llm_start, etc.) are ignored
     return None

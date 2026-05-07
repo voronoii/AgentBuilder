@@ -144,7 +144,7 @@ class WorkflowCompiler:
         guardrail_ids: set[str] = set()
         for nid in processing_ids_ordered:
             ntype = node_map[nid].get("data", {}).get("type", "")
-            if ntype == "input_guardrail":
+            if ntype in ("input_guardrail", "output_guardrail"):
                 guardrail_ids.add(nid)
 
         # Wire edges between processing nodes.

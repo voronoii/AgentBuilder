@@ -22,6 +22,7 @@ _REQUIRED_FIELDS: dict[str, list[str]] = {
     "knowledge_base": ["knowledgeBaseId"],
     "prompt_template": ["template"],
     "input_guardrail": ["provider", "model"],
+    "output_guardrail": ["provider", "model"],
 }
 
 _VALID_NODE_TYPES = {
@@ -32,6 +33,7 @@ _VALID_NODE_TYPES = {
     "knowledge_base",
     "prompt_template",
     "input_guardrail",
+    "output_guardrail",
 }
 
 

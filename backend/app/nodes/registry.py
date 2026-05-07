@@ -34,6 +34,7 @@ _SUPPORTED_TYPES = {
     "knowledge_base",
     "prompt_template",
     "input_guardrail",
+    "output_guardrail",
 }
 
 
@@ -105,6 +106,11 @@ async def create_node_function(
         from app.nodes.input_guardrail import make_input_guardrail_node  # noqa: PLC0415
 
         return await make_input_guardrail_node(node_id, node_data, session, predecessor_ids=predecessor_ids)
+
+    if node_type == "output_guardrail":
+        from app.nodes.output_guardrail import make_output_guardrail_node  # noqa: PLC0415
+
+        return await make_output_guardrail_node(node_id, node_data, session, predecessor_ids=predecessor_ids)
 
     # Should be unreachable after the guard above, but satisfies type checker.
     raise AppError(

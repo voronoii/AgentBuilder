@@ -20,6 +20,7 @@ const NODE_TYPES: NodeType[] = [
   'knowledge_base',
   'prompt_template',
   'input_guardrail',
+  'output_guardrail',
 ];
 
 interface McpTool {

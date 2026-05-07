@@ -6,12 +6,17 @@ from enum import StrEnum
 
 
 class CheckType(StrEnum):
+    # ── Input guardrail checks ──────────────────────────────────────────────
     PII = "pii"
     TOKENS = "tokens"
     JAILBREAK = "jailbreak"
     INJECTION = "injection"
     TOXICITY = "toxicity"
     CUSTOM = "custom"
+    # ── Output guardrail checks ─────────────────────────────────────────────
+    HARMFUL = "harmful"          # LLM-generated harmful/inappropriate response
+    PII_EXPOSURE = "pii_exposure"  # PII leaked in LLM output (supports mask action)
+    FORMAT = "format"            # Rules-based output format validation
 
 
 # Human-readable labels used in log messages and rejection explanations
@@ -22,6 +27,9 @@ CHECK_LABELS: dict[CheckType, str] = {
     CheckType.INJECTION: "Prompt Injection",
     CheckType.TOXICITY: "Offensive Content",
     CheckType.CUSTOM: "Custom Guardrail",
+    CheckType.HARMFUL: "Harmful Response",
+    CheckType.PII_EXPOSURE: "PII Exposure",
+    CheckType.FORMAT: "Format Validation",
 }
 
 # Fixed rejection messages (Langflow pattern — deterministic, no LLM reason leakage)
@@ -43,6 +51,15 @@ REJECTION_MESSAGES: dict[CheckType, str] = {
         "입력에 공격적이거나 혐오스럽거나 부적절한 내용이 포함되어 있습니다."
     ),
     CheckType.CUSTOM: "입력이 커스텀 가드레일 기준을 위반했습니다.",
+    CheckType.HARMFUL: (
+        "AI 응답에 유해하거나 부적절한 내용이 포함되어 있어 전달이 차단되었습니다."
+    ),
+    CheckType.PII_EXPOSURE: (
+        "AI 응답에 개인 식별 정보(PII)가 포함되어 있어 전달이 차단되었습니다."
+    ),
+    CheckType.FORMAT: (
+        "AI 응답이 요구된 형식 조건을 충족하지 않습니다."
+    ),
 }
 
 

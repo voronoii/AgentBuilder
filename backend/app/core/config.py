@@ -70,6 +70,7 @@ class Settings(BaseSettings):
     # Optional API keys for chat providers (loaded if present)
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
+    openrouter_api_key: str | None = None
 
     # vLLM (OpenAI-compatible local model serving)
     vllm_base_url: str | None = None

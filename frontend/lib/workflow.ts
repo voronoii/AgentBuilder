@@ -9,7 +9,34 @@ export type NodeType =
   | 'agent'
   | 'knowledge_base'
   | 'prompt_template'
-  | 'input_guardrail';
+  | 'input_guardrail'
+  | 'output_guardrail';
+
+export type HookType = 'tool_usage_checker' | 'kb_citation_verifier' | 'llm_verifier';
+
+export interface HookConfig {
+  type: HookType;
+  // tool_usage_checker
+  requiredTools?: string[];
+  forbiddenTools?: string[];
+  // kb_citation_verifier
+  kbId?: string;
+  patterns?: string[];
+  // llm_verifier
+  criteria?: string;
+  verifierProvider?: string;
+  verifierModel?: string;
+  // shared
+  maxRetries?: number;
+  onExhausted?: 'pass' | 'error' | 'fallback_message';
+  timeoutMs?: number;
+  retryStrategy?: 'accumulate' | 'clean';
+  fallbackMessage?: string;
+}
+
+export interface HooksConfig {
+  after_agent?: HookConfig[];
+}
 
 export interface NodeData {
   type: NodeType;
@@ -30,6 +57,7 @@ export interface NodeData {
     topK?: number;
     scoreThreshold?: number;
   }>;
+  hooks?: HooksConfig;
   // Knowledge Base
   knowledgeBaseId?: string;
   topK?: number;
@@ -42,6 +70,8 @@ export interface NodeData {
   custom_rule?: string;
   heuristic_threshold?: number;
   action?: string;
+  // Output Guardrail (format_rules)
+  format_rules?: Record<string, unknown>;
 }
 
 export interface WorkflowRead {

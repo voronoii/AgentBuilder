@@ -31,6 +31,7 @@ import {
   InputGuardrailNode,
   KnowledgeBaseNode,
   LLMNode,
+  OutputGuardrailNode,
   PromptTemplateNode,
 } from './nodes/BaseNode';
 
@@ -42,6 +43,7 @@ const nodeTypes: NodeTypes = {
   knowledge_base: KnowledgeBaseNode,
   prompt_template: PromptTemplateNode,
   input_guardrail: InputGuardrailNode,
+  output_guardrail: OutputGuardrailNode,
 };
 
 const edgeTypes: EdgeTypes = {

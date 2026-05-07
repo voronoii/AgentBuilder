@@ -288,6 +288,16 @@ async def make_agent_node(
     resolved_kbs = await _resolve_kb_metadata(kb_configs, session)
     credentials = await resolve_provider_credentials(provider, session)
 
+    # Parse hooks from node_data at compile time
+    from app.hooks.registry import build_hooks_from_node_data
+
+    _hooks = build_hooks_from_node_data(node_data)
+    if _hooks:
+        _log.info(
+            "agent [%s]: %d hook(s) configured: %s",
+            node_id, len(_hooks), [h.hook_type for h in _hooks],
+        )
+
     async def agent_node(state: WorkflowState) -> dict:
         from langgraph.prebuilt import create_react_agent
 
@@ -327,17 +337,86 @@ async def make_agent_node(
 
             # recursion_limit accounts for tool-call + tool-response pairs plus final answer
             recursion_limit = max_iterations * 2 + 1
-            result = await react_agent.ainvoke(
-                {"messages": [{"role": "user", "content": input_text}]},
-                config={"recursion_limit": recursion_limit},
-            )
 
-            # Extract last AI message content
-            agent_messages = result.get("messages", [])
+            # --- Hook loop ---
+            initial_messages: list[dict[str, str]] = [{"role": "user", "content": input_text}]
+            messages = initial_messages
             output: str = ""
-            if agent_messages:
-                last_msg = agent_messages[-1]
-                output = last_msg.content if hasattr(last_msg, "content") else str(last_msg)
+            hook_max_retries = max(h.max_retries for h in _hooks) if _hooks else 0
+
+            for attempt in range(hook_max_retries + 1):
+                result = await react_agent.ainvoke(
+                    {"messages": messages},
+                    config={"recursion_limit": recursion_limit},
+                )
+
+                agent_messages = result.get("messages", [])
+                if agent_messages:
+                    last_msg = agent_messages[-1]
+                    output = last_msg.content if hasattr(last_msg, "content") else str(last_msg)
+                else:
+                    output = ""
+
+                # No hooks → done
+                if not _hooks:
+                    break
+
+                # Build hook context — stream_writer is a no-op if run_id
+                # is not available (e.g. during tests / direct compilation).
+                from app.hooks.protocol import HookContext
+                from app.hooks.runner import run_after_agent_hooks
+
+                hook_ctx = HookContext(
+                    run_id=state.get("_run_id", uuid.uuid4()),
+                    node_id=node_id,
+                    workflow_owner_id=state.get("_owner_id", uuid.uuid4()),
+                    session=session,
+                    stream_writer=state.get("_stream_writer", lambda d: None),
+                )
+
+                all_passed, failed_hook, verdict = await run_after_agent_hooks(
+                    hooks=_hooks,
+                    output=output,
+                    messages=agent_messages,
+                    state=state,
+                    ctx=hook_ctx,
+                    attempt=attempt,
+                )
+
+                if all_passed:
+                    break
+
+                # Hook exhausted — apply on_exhausted policy
+                if failed_hook and attempt >= failed_hook.max_retries:
+                    if failed_hook.on_exhausted == "error":
+                        _log.warning(
+                            "agent [%s]: hook %s exhausted, returning error",
+                            node_id, failed_hook.hook_type,
+                        )
+                        return {
+                            "node_outputs": {node_id: ""},
+                            "messages": [{"role": "assistant",
+                                          "content": f"[Hook 검증 실패] {verdict.feedback}"}],
+                            "final_output": f"[Hook 검증 실패] {verdict.feedback}",
+                            "guardrail_blocked": True,
+                        }
+                    elif failed_hook.on_exhausted == "fallback_message":
+                        output = failed_hook.fallback_message
+                        break
+                    else:  # "pass"
+                        break
+
+                # Retry — build new messages based on retry_strategy
+                if failed_hook and verdict.feedback:
+                    retry_strategy = getattr(failed_hook, "retry_strategy", "accumulate")
+                    if retry_strategy == "clean":
+                        messages = initial_messages + [
+                            {"role": "user", "content": verdict.feedback},
+                        ]
+                    else:  # "accumulate"
+                        messages = agent_messages + [
+                            {"role": "user", "content": verdict.feedback},
+                        ]
 
             _log.debug("agent [%s]: output_len=%d", node_id, len(output))
             return {

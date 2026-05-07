@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Play, Check, MessageSquare, Wrench, ClipboardList, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Play, Check, MessageSquare, Wrench, ClipboardList, CheckCircle, AlertCircle, RefreshCw, Shield, ShieldCheck, ShieldX } from 'lucide-react';
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 
@@ -56,6 +56,8 @@ const EVENT_ICONS: Record<string, React.ReactNode> = {
   tool_result: <ClipboardList className="h-3.5 w-3.5" />,
   workflow_end: <CheckCircle className="h-3.5 w-3.5" />,
   workflow_error: <AlertCircle className="h-3.5 w-3.5" />,
+  hook_start: <Shield className="h-3.5 w-3.5" />,
+  hook_result: <ShieldCheck className="h-3.5 w-3.5" />,
 };
 
 const EVENT_COLORS: Record<string, string> = {
@@ -65,6 +67,8 @@ const EVENT_COLORS: Record<string, string> = {
   workflow_end: 'text-green-700',
   tool_call: 'text-purple-600',
   tool_result: 'text-purple-500',
+  hook_start: 'text-amber-600',
+  hook_result: 'text-amber-600',
 };
 
 function formatPayload(ev: RunEvent): string | null {
@@ -84,6 +88,14 @@ function formatPayload(ev: RunEvent): string | null {
   if (ev.event_type === 'tool_result' && p.result) {
     const r = String(p.result);
     return r.length > 200 ? r.slice(0, 200) + '…' : r;
+  }
+  if (ev.event_type === 'hook_start' && p.hook_type) {
+    return `${p.hook_type} 검증 시작 (시도 ${p.attempt ?? 1})`;
+  }
+  if (ev.event_type === 'hook_result' && p.hook_type) {
+    const status = p.passed ? '✓ 통과' : '✗ 실패';
+    const feedback = p.feedback ? `\n${p.feedback}` : '';
+    return `${p.hook_type} ${status} (시도 ${p.attempt ?? 1})${feedback}`;
   }
   if (p.node_name) return String(p.node_name);
 
@@ -166,8 +178,13 @@ function RunEventList({ runId }: { runId: string }) {
     <div className="mt-2 space-y-1.5">
       {displayEvents.map((ev, i) => {
         const isMergedToken = ev.event_type === 'llm_token_merged';
-        const icon = isMergedToken ? EVENT_ICONS.llm_token : (EVENT_ICONS[ev.event_type] || <span className="text-xs">•</span>);
-        const color = EVENT_COLORS[ev.event_type] || 'text-clay-text';
+        const isHookFail = ev.event_type === 'hook_result' && ev.payload.passed === false;
+        const icon = isMergedToken
+          ? EVENT_ICONS.llm_token
+          : isHookFail
+            ? <ShieldX className="h-3.5 w-3.5" />
+            : (EVENT_ICONS[ev.event_type] || <span className="text-xs">•</span>);
+        const color = isHookFail ? 'text-red-500' : (EVENT_COLORS[ev.event_type] || 'text-clay-text');
         const isError = ev.event_type === 'workflow_error';
 
         // For merged tokens, show concatenated text

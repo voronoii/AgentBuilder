@@ -27,7 +27,7 @@ class ProviderInfo(BaseModel):
     name: str
     enabled: bool
     models: list[ProviderModelInfo]
-
+ 
 
 async def _resolve_key(
     repo: SettingsRepository,
@@ -58,7 +58,9 @@ async def list_providers(
     )
     env_vllm = settings.vllm_base_url
     vllm_url = await _resolve_key(repo, "VLLM_BASE_URL", env_vllm)
-    openrouter_key = await _resolve_key(repo, "OPENROUTER_API_KEY", None)
+    openrouter_key = await _resolve_key(
+        repo, "OPENROUTER_API_KEY", settings.openrouter_api_key
+    )
 
     # Dynamically fetch available models from vLLM endpoint
     vllm_models: list[dict[str, str]] = [{"id": "default", "name": "Default Model"}]

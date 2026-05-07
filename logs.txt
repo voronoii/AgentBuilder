@@ -1,0 +1,449 @@
+api-1       | Skipping invalid hook config {'type': 'llm_verifier', 'maxRetries': 1, 'onExhausted': 'error', 'retryStrategy': 'accumulate', 'criteria': '', 'timeoutMs': 60000}: LLMVerifierHook.__init__() missing 2 required keyword-only arguments: 'provider' and 'model'
+api-1       | INFO:     192.168.144.5:49896 - "POST /workflows/e50dbae3-1f68-49ea-a495-bffe9eb7ade3/runs HTTP/1.1" 201 Created
+api-1       | Skipping invalid hook config {'type': 'llm_verifier', 'maxRetries': 1, 'onExhausted': 'error', 'retryStrategy': 'accumulate', 'criteria': '', 'timeoutMs': 60000}: LLMVerifierHook.__init__() missing 2 required keyword-only arguments: 'provider' and 'model'
+api-1       | runtime: workflow execution failed: run_id=52366f2f-382e-4f4d-83bd-21907b81fde3
+api-1       | Traceback (most recent call last):
+api-1       |   File "/app/app/services/workflow/runtime.py", line 192, in _execute_workflow
+api-1       |     await asyncio.wait_for(_stream(), timeout=MAX_RUN_TIMEOUT_SECONDS)
+api-1       |   File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+api-1       |     return await fut
+api-1       |            ^^^^^^^^^
+api-1       |   File "/app/app/services/workflow/runtime.py", line 146, in _stream
+api-1       |     async for raw_event in compiled.astream_events(initial_state, version="v2"):
+api-1       |     ...<38 lines>...
+api-1       |         await queue.put(mapped)
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1543, in astream_events
+api-1       |     async for event in event_stream:
+api-1       |         yield event
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 1037, in _astream_events_implementation_v2
+api-1       |     await task
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 992, in consume_astream
+api-1       |     async for _ in event_streamer.tap_output_aiter(run_id, stream):
+api-1       |         # All the content will be picked up
+api-1       |         pass
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 191, in tap_output_aiter
+api-1       |     first = await py_anext(output, default=sentinel)
+api-1       |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/utils/aiter.py", line 78, in anext_impl
+api-1       |     return await __anext__(iterator)
+api-1       |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/main.py", line 2993, in astream
+api-1       |     async for _ in runner.atick(
+api-1       |     ...<13 lines>...
+api-1       |             yield o
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/_runner.py", line 295, in atick
+api-1       |     await arun_with_retry(
+api-1       |     ...<15 lines>...
+api-1       |     )
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/_retry.py", line 132, in arun_with_retry
+api-1       |     async for _ in task.proc.astream(task.input, config):
+api-1       |         pass
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 840, in astream
+api-1       |     output = await asyncio.create_task(
+api-1       |              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |         _consume_aiter(aiterator), context=context
+api-1       |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |     )
+api-1       |     ^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 905, in _consume_aiter
+api-1       |     async for chunk in it:
+api-1       |     ...<8 lines>...
+api-1       |             output = chunk
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 191, in tap_output_aiter
+api-1       |     first = await py_anext(output, default=sentinel)
+api-1       |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/utils/aiter.py", line 78, in anext_impl
+api-1       |     return await __anext__(iterator)
+api-1       |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1616, in atransform
+api-1       |     async for ichunk in input:
+api-1       |     ...<14 lines>...
+api-1       |                 final = ichunk
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1176, in astream
+api-1       |     yield await self.ainvoke(input, config, **kwargs)
+api-1       |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 474, in ainvoke
+api-1       |     ret = await self.afunc(*args, **kwargs)
+api-1       |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/app/app/nodes/agent.py", line 303, in agent_node
+api-1       |     from langchain.agents import create_react_agent
+api-1       | ModuleNotFoundError: No module named 'langchain'
+api-1       | During task with name 'node_1776729510004_j9zcd' and id 'eb0dde7f-80df-0af6-5d05-9d305606f61a'
+api-1       | runtime: workflow execution failed: run_id=8d562334-70e8-4fb2-8662-a39ef48c0fd6
+api-1       | Traceback (most recent call last):
+api-1       |   File "/app/app/services/workflow/runtime.py", line 192, in _execute_workflow
+api-1       |     await asyncio.wait_for(_stream(), timeout=MAX_RUN_TIMEOUT_SECONDS)
+api-1       |   File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+api-1       |     return await fut
+api-1       |            ^^^^^^^^^
+api-1       |   File "/app/app/services/workflow/runtime.py", line 146, in _stream
+api-1       |     async for raw_event in compiled.astream_events(initial_state, version="v2"):
+api-1       |     ...<38 lines>...
+api-1       |         await queue.put(mapped)
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1543, in astream_events
+api-1       |     async for event in event_stream:
+api-1       |         yield event
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 1037, in _astream_events_implementation_v2
+api-1       |     await task
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 992, in consume_astream
+api-1       |     async for _ in event_streamer.tap_output_aiter(run_id, stream):
+api-1       |         # All the content will be picked up
+api-1       |         pass
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 191, in tap_output_aiter
+api-1       |     first = await py_anext(output, default=sentinel)
+api-1       |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/utils/aiter.py", line 78, in anext_impl
+api-1       |     return await __anext__(iterator)
+api-1       |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/main.py", line 2993, in astream
+api-1       |     async for _ in runner.atick(
+api-1       |     ...<13 lines>...
+api-1       |             yield o
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/_runner.py", line 295, in atick
+api-1       |     await arun_with_retry(
+api-1       |     ...<15 lines>...
+api-1       |     )
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/_retry.py", line 132, in arun_with_retry
+api-1       |     async for _ in task.proc.astream(task.input, config):
+api-1       |         pass
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 840, in astream
+api-1       |     output = await asyncio.create_task(
+api-1       |              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |         _consume_aiter(aiterator), context=context
+api-1       |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |     )
+api-1       |     ^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 905, in _consume_aiter
+api-1       |     async for chunk in it:
+api-1       |     ...<8 lines>...
+api-1       |             output = chunk
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 191, in tap_output_aiter
+api-1       |     first = await py_anext(output, default=sentinel)
+api-1       |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/utils/aiter.py", line 78, in anext_impl
+api-1       |     return await __anext__(iterator)
+api-1       |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1616, in atransform
+api-1       |     async for ichunk in input:
+api-1       |     ...<14 lines>...
+api-1       |                 final = ichunk
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1176, in astream
+api-1       |     yield await self.ainvoke(input, config, **kwargs)
+api-1       |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 474, in ainvoke
+api-1       |     ret = await self.afunc(*args, **kwargs)
+api-1       |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/app/app/nodes/agent.py", line 303, in agent_node
+api-1       |     from langchain.agents import create_react_agent
+api-1       | ModuleNotFoundError: No module named 'langchain'
+api-1       | During task with name 'node_1776729510004_j9zcd' and id '463a0fec-4fd1-16cb-8fd8-1b7754d8e5b7'
+api-1       | INFO:     192.168.144.5:49908 - "GET /runs/8d562334-70e8-4fb2-8662-a39ef48c0fd6/events HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:52512 - "POST /workflows/6d949a89-ba32-4e7e-9ce4-1e1410eabcc5/validate HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:52528 - "POST /workflows/6d949a89-ba32-4e7e-9ce4-1e1410eabcc5/runs HTTP/1.1" 201 Created
+api-1       | runtime: workflow execution failed: run_id=a42f37c6-cf2a-402f-ae70-9b0e5e8bac9a
+api-1       | Traceback (most recent call last):
+api-1       |   File "/app/app/services/workflow/runtime.py", line 192, in _execute_workflow
+api-1       |     await asyncio.wait_for(_stream(), timeout=MAX_RUN_TIMEOUT_SECONDS)
+api-1       |   File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+api-1       |     return await fut
+api-1       |            ^^^^^^^^^
+api-1       |   File "/app/app/services/workflow/runtime.py", line 146, in _stream
+api-1       |     async for raw_event in compiled.astream_events(initial_state, version="v2"):
+api-1       |     ...<38 lines>...
+api-1       |         await queue.put(mapped)
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1543, in astream_events
+api-1       |     async for event in event_stream:
+api-1       |         yield event
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 1037, in _astream_events_implementation_v2
+api-1       |     await task
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 992, in consume_astream
+api-1       |     async for _ in event_streamer.tap_output_aiter(run_id, stream):
+api-1       |         # All the content will be picked up
+api-1       |         pass
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 191, in tap_output_aiter
+api-1       |     first = await py_anext(output, default=sentinel)
+api-1       |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/utils/aiter.py", line 78, in anext_impl
+api-1       |     return await __anext__(iterator)
+api-1       |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/main.py", line 2993, in astream
+api-1       |     async for _ in runner.atick(
+api-1       |     ...<13 lines>...
+api-1       |             yield o
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/_runner.py", line 295, in atick
+api-1       |     await arun_with_retry(
+api-1       |     ...<15 lines>...
+api-1       |     )
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/_retry.py", line 132, in arun_with_retry
+api-1       |     async for _ in task.proc.astream(task.input, config):
+api-1       |         pass
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 840, in astream
+api-1       |     output = await asyncio.create_task(
+api-1       |              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |         _consume_aiter(aiterator), context=context
+api-1       |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |     )
+api-1       |     ^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 905, in _consume_aiter
+api-1       |     async for chunk in it:
+api-1       |     ...<8 lines>...
+api-1       |             output = chunk
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 191, in tap_output_aiter
+api-1       |     first = await py_anext(output, default=sentinel)
+api-1       |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/utils/aiter.py", line 78, in anext_impl
+api-1       |     return await __anext__(iterator)
+api-1       |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1616, in atransform
+api-1       |     async for ichunk in input:
+api-1       |     ...<14 lines>...
+api-1       |                 final = ichunk
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1176, in astream
+api-1       |     yield await self.ainvoke(input, config, **kwargs)
+api-1       |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 474, in ainvoke
+api-1       |     ret = await self.afunc(*args, **kwargs)
+api-1       |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/app/app/nodes/agent.py", line 303, in agent_node
+api-1       |     from langchain.agents import create_react_agent
+api-1       | ModuleNotFoundError: No module named 'langchain'
+api-1       | During task with name 'node_1778146577230_7aawz' and id '033253f2-634c-2ce3-a735-1d07e16875d9'
+api-1       | INFO:     192.168.144.5:52540 - "GET /runs/a42f37c6-cf2a-402f-ae70-9b0e5e8bac9a/events HTTP/1.1" 200 OK
+api-1       | INFO:     127.0.0.1:47474 - "GET /health HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:52552 - "GET /workflows HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:52564 - "GET /settings HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:52566 - "GET /providers HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:52576 - "GET /knowledge HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:52578 - "GET /mcp HTTP/1.1" 200 OK
+api-1       | INFO:     127.0.0.1:47484 - "GET /health HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:52590 - "PUT /settings/OPENROUTER_API_KEY HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:52594 - "GET /settings HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:52602 - "PUT /workflows/6d949a89-ba32-4e7e-9ce4-1e1410eabcc5 HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:51196 - "GET /workflows HTTP/1.1" 200 OK
+api-1       | INFO:     127.0.0.1:46612 - "GET /health HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:51210 - "GET /workflows/e50dbae3-1f68-49ea-a495-bffe9eb7ade3 HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:51212 - "GET /apps HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:51222 - "PUT /workflows/6d949a89-ba32-4e7e-9ce4-1e1410eabcc5 HTTP/1.1" 200 OK
+api-1       | INFO:     127.0.0.1:46624 - "GET /health HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:51230 - "POST /workflows/6d949a89-ba32-4e7e-9ce4-1e1410eabcc5/validate HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:51238 - "POST /workflows/6d949a89-ba32-4e7e-9ce4-1e1410eabcc5/runs HTTP/1.1" 201 Created
+api-1       | runtime: workflow execution failed: run_id=2a2d52f9-257d-45ea-92c1-e5ad6ed3ff13
+api-1       | Traceback (most recent call last):
+api-1       |   File "/app/app/services/workflow/runtime.py", line 192, in _execute_workflow
+api-1       |     await asyncio.wait_for(_stream(), timeout=MAX_RUN_TIMEOUT_SECONDS)
+api-1       |   File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+api-1       |     return await fut
+api-1       |            ^^^^^^^^^
+api-1       |   File "/app/app/services/workflow/runtime.py", line 146, in _stream
+api-1       |     async for raw_event in compiled.astream_events(initial_state, version="v2"):
+api-1       |     ...<38 lines>...
+api-1       |         await queue.put(mapped)
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1543, in astream_events
+api-1       |     async for event in event_stream:
+api-1       |         yield event
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 1037, in _astream_events_implementation_v2
+api-1       |     await task
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 992, in consume_astream
+api-1       |     async for _ in event_streamer.tap_output_aiter(run_id, stream):
+api-1       |         # All the content will be picked up
+api-1       |         pass
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 191, in tap_output_aiter
+api-1       |     first = await py_anext(output, default=sentinel)
+api-1       |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/utils/aiter.py", line 78, in anext_impl
+api-1       |     return await __anext__(iterator)
+api-1       |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/main.py", line 2993, in astream
+api-1       |     async for _ in runner.atick(
+api-1       |     ...<13 lines>...
+api-1       |             yield o
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/_runner.py", line 295, in atick
+api-1       |     await arun_with_retry(
+api-1       |     ...<15 lines>...
+api-1       |     )
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/_retry.py", line 132, in arun_with_retry
+api-1       |     async for _ in task.proc.astream(task.input, config):
+api-1       |         pass
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 840, in astream
+api-1       |     output = await asyncio.create_task(
+api-1       |              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |         _consume_aiter(aiterator), context=context
+api-1       |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |     )
+api-1       |     ^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 905, in _consume_aiter
+api-1       |     async for chunk in it:
+api-1       |     ...<8 lines>...
+api-1       |             output = chunk
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 191, in tap_output_aiter
+api-1       |     first = await py_anext(output, default=sentinel)
+api-1       |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/utils/aiter.py", line 78, in anext_impl
+api-1       |     return await __anext__(iterator)
+api-1       |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1616, in atransform
+api-1       |     async for ichunk in input:
+api-1       |     ...<14 lines>...
+api-1       |                 final = ichunk
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1176, in astream
+api-1       |     yield await self.ainvoke(input, config, **kwargs)
+api-1       |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 474, in ainvoke
+api-1       |     ret = await self.afunc(*args, **kwargs)
+api-1       |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/app/app/nodes/agent.py", line 303, in agent_node
+api-1       |     from langchain.agents import create_react_agent
+api-1       | ModuleNotFoundError: No module named 'langchain'
+api-1       | During task with name 'node_1778146577230_7aawz' and id 'd28c6e57-ce21-a39f-a589-99d82bd0f678'
+api-1       | INFO:     192.168.144.5:51248 - "GET /runs/2a2d52f9-257d-45ea-92c1-e5ad6ed3ff13/events HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:51256 - "POST /workflows/e50dbae3-1f68-49ea-a495-bffe9eb7ade3/validate HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:51252 - "POST /workflows/e50dbae3-1f68-49ea-a495-bffe9eb7ade3/validate HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:51258 - "POST /workflows/e50dbae3-1f68-49ea-a495-bffe9eb7ade3/runs HTTP/1.1" 201 Created
+api-1       | INFO:     192.168.144.5:51270 - "POST /workflows/e50dbae3-1f68-49ea-a495-bffe9eb7ade3/runs HTTP/1.1" 201 Created
+api-1       | Skipping invalid hook config {'type': 'llm_verifier', 'maxRetries': 1, 'onExhausted': 'error', 'retryStrategy': 'accumulate', 'criteria': '', 'timeoutMs': 60000}: LLMVerifierHook.__init__() missing 2 required keyword-only arguments: 'provider' and 'model'
+api-1       | runtime: workflow execution failed: run_id=431f21b6-8075-430e-b96e-59f64c811fad
+api-1       | Traceback (most recent call last):
+api-1       |   File "/app/app/services/workflow/runtime.py", line 192, in _execute_workflow
+api-1       |     await asyncio.wait_for(_stream(), timeout=MAX_RUN_TIMEOUT_SECONDS)
+api-1       |   File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+api-1       |     return await fut
+api-1       |            ^^^^^^^^^
+api-1       |   File "/app/app/services/workflow/runtime.py", line 146, in _stream
+api-1       |     async for raw_event in compiled.astream_events(initial_state, version="v2"):
+api-1       |     ...<38 lines>...
+api-1       |         await queue.put(mapped)
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1543, in astream_events
+api-1       |     async for event in event_stream:
+api-1       |         yield event
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 1037, in _astream_events_implementation_v2
+api-1       |     await task
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 992, in consume_astream
+api-1       |     async for _ in event_streamer.tap_output_aiter(run_id, stream):
+api-1       |         # All the content will be picked up
+api-1       |         pass
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 191, in tap_output_aiter
+api-1       |     first = await py_anext(output, default=sentinel)
+api-1       |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/utils/aiter.py", line 78, in anext_impl
+api-1       |     return await __anext__(iterator)
+api-1       |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/main.py", line 2993, in astream
+api-1       |     async for _ in runner.atick(
+api-1       |     ...<13 lines>...
+api-1       |             yield o
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/_runner.py", line 295, in atick
+api-1       |     await arun_with_retry(
+api-1       |     ...<15 lines>...
+api-1       |     )
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/_retry.py", line 132, in arun_with_retry
+api-1       |     async for _ in task.proc.astream(task.input, config):
+api-1       |         pass
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 840, in astream
+api-1       |     output = await asyncio.create_task(
+api-1       |              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |         _consume_aiter(aiterator), context=context
+api-1       |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |     )
+api-1       |     ^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 905, in _consume_aiter
+api-1       |     async for chunk in it:
+api-1       |     ...<8 lines>...
+api-1       |             output = chunk
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 191, in tap_output_aiter
+api-1       |     first = await py_anext(output, default=sentinel)
+api-1       |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/utils/aiter.py", line 78, in anext_impl
+api-1       |     return await __anext__(iterator)
+api-1       |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1616, in atransform
+api-1       |     async for ichunk in input:
+api-1       |     ...<14 lines>...
+api-1       |                 final = ichunk
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1176, in astream
+api-1       |     yield await self.ainvoke(input, config, **kwargs)
+api-1       |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 474, in ainvoke
+api-1       |     ret = await self.afunc(*args, **kwargs)
+api-1       |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/app/app/nodes/agent.py", line 303, in agent_node
+api-1       |     from langchain.agents import create_react_agent
+api-1       | ModuleNotFoundError: No module named 'langchain'
+api-1       | During task with name 'node_1776729510004_j9zcd' and id '2e52f0c4-92ff-7362-0f1c-1b554de79cbb'
+api-1       | Skipping invalid hook config {'type': 'llm_verifier', 'maxRetries': 1, 'onExhausted': 'error', 'retryStrategy': 'accumulate', 'criteria': '', 'timeoutMs': 60000}: LLMVerifierHook.__init__() missing 2 required keyword-only arguments: 'provider' and 'model'
+api-1       | runtime: workflow execution failed: run_id=22a1509e-c0d4-473f-9626-e84db4295b2b
+api-1       | Traceback (most recent call last):
+api-1       |   File "/app/app/services/workflow/runtime.py", line 192, in _execute_workflow
+api-1       |     await asyncio.wait_for(_stream(), timeout=MAX_RUN_TIMEOUT_SECONDS)
+api-1       |   File "/usr/local/lib/python3.13/asyncio/tasks.py", line 507, in wait_for
+api-1       |     return await fut
+api-1       |            ^^^^^^^^^
+api-1       |   File "/app/app/services/workflow/runtime.py", line 146, in _stream
+api-1       |     async for raw_event in compiled.astream_events(initial_state, version="v2"):
+api-1       |     ...<38 lines>...
+api-1       |         await queue.put(mapped)
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1543, in astream_events
+api-1       |     async for event in event_stream:
+api-1       |         yield event
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 1037, in _astream_events_implementation_v2
+api-1       |     await task
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 992, in consume_astream
+api-1       |     async for _ in event_streamer.tap_output_aiter(run_id, stream):
+api-1       |         # All the content will be picked up
+api-1       |         pass
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 191, in tap_output_aiter
+api-1       |     first = await py_anext(output, default=sentinel)
+api-1       |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/utils/aiter.py", line 78, in anext_impl
+api-1       |     return await __anext__(iterator)
+api-1       |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/main.py", line 2993, in astream
+api-1       |     async for _ in runner.atick(
+api-1       |     ...<13 lines>...
+api-1       |             yield o
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/_runner.py", line 295, in atick
+api-1       |     await arun_with_retry(
+api-1       |     ...<15 lines>...
+api-1       |     )
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/pregel/_retry.py", line 132, in arun_with_retry
+api-1       |     async for _ in task.proc.astream(task.input, config):
+api-1       |         pass
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 840, in astream
+api-1       |     output = await asyncio.create_task(
+api-1       |              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |         _consume_aiter(aiterator), context=context
+api-1       |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |     )
+api-1       |     ^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 905, in _consume_aiter
+api-1       |     async for chunk in it:
+api-1       |     ...<8 lines>...
+api-1       |             output = chunk
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/tracers/event_stream.py", line 191, in tap_output_aiter
+api-1       |     first = await py_anext(output, default=sentinel)
+api-1       |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/utils/aiter.py", line 78, in anext_impl
+api-1       |     return await __anext__(iterator)
+api-1       |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1616, in atransform
+api-1       |     async for ichunk in input:
+api-1       |     ...<14 lines>...
+api-1       |                 final = ichunk
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langchain_core/runnables/base.py", line 1176, in astream
+api-1       |     yield await self.ainvoke(input, config, **kwargs)
+api-1       |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/usr/local/lib/python3.13/site-packages/langgraph/_internal/_runnable.py", line 474, in ainvoke
+api-1       |     ret = await self.afunc(*args, **kwargs)
+api-1       |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api-1       |   File "/app/app/nodes/agent.py", line 303, in agent_node
+api-1       |     from langchain.agents import create_react_agent
+api-1       | ModuleNotFoundError: No module named 'langchain'
+api-1       | During task with name 'node_1776729510004_j9zcd' and id '1999aa5e-3d32-2aac-c02f-03254f084cc4'
+api-1       | INFO:     192.168.144.5:51278 - "GET /runs/431f21b6-8075-430e-b96e-59f64c811fad/events HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:51286 - "GET /runs/22a1509e-c0d4-473f-9626-e84db4295b2b/events HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:51302 - "GET /providers HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:51312 - "GET /knowledge HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:51322 - "GET /mcp HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:37680 - "PUT /workflows/6d949a89-ba32-4e7e-9ce4-1e1410eabcc5 HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:37696 - "GET /workflows/e50dbae3-1f68-49ea-a495-bffe9eb7ade3/runs HTTP/1.1" 200 OK
+api-1       | INFO:     127.0.0.1:51758 - "GET /health HTTP/1.1" 200 OK
+api-1       | INFO:     192.168.144.5:37702 - "GET /runs/22a1509e-c0d4-473f-9626-e84db4295b2b/events/history HTTP/1.1" 200 OK

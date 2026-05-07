@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { NODE_STYLES } from './nodes/nodeStyles';
 
 import { apiBase } from '@/lib/api';
-import type { NodeData, NodeType, Provider } from '@/lib/workflow';
+import type { HookConfig, HooksConfig, NodeData, NodeType, Provider } from '@/lib/workflow';
 import { fetchProviders } from '@/lib/workflow';
 import { useWorkflowStore } from '@/stores/workflowStore';
 
@@ -213,6 +213,211 @@ function AgentConfig({ data, onChange }: { data: NodeData; onChange: (d: Partial
           )}
         </div>
       </Field>
+      <AgentHooksConfig
+        hooks={data.hooks ?? {}}
+        tools={selectedTools}
+        kbs={kbs}
+        providers={providers}
+        onChange={(hooks) => onChange({ hooks })}
+      />
+    </div>
+  );
+}
+
+// --- Hook Types ---
+
+const HOOK_TYPES: Array<{ id: HookConfig['type']; label: string; description: string }> = [
+  { id: 'tool_usage_checker', label: '도구 사용 검증', description: '필수/금지 도구 사용 확인' },
+  { id: 'kb_citation_verifier', label: 'KB 인용 검증', description: '응답의 인용이 KB에 존재하는지 확인' },
+  { id: 'llm_verifier', label: 'LLM 검증', description: '별도 LLM으로 응답 품질 검증' },
+];
+
+const ON_EXHAUSTED_OPTIONS = [
+  { value: 'error', label: '에러 (워크플로우 중단)' },
+  { value: 'pass', label: '통과 (마지막 응답 전달)' },
+  { value: 'fallback_message', label: '대체 메시지' },
+];
+
+function makeDefaultHook(type: HookConfig['type']): HookConfig {
+  const base = { type, maxRetries: 1, onExhausted: 'error' as const, retryStrategy: 'accumulate' as const };
+  if (type === 'tool_usage_checker') return { ...base, requiredTools: [], forbiddenTools: [], timeoutMs: 5000 };
+  if (type === 'kb_citation_verifier') return { ...base, kbId: '', patterns: [], maxRetries: 2, timeoutMs: 30000 };
+  return { ...base, criteria: '', timeoutMs: 60000 };
+}
+
+interface AgentHooksConfigProps {
+  hooks: HooksConfig;
+  tools: string[];
+  kbs: KbOption[];
+  providers: Provider[];
+  onChange: (hooks: HooksConfig) => void;
+}
+
+function AgentHooksConfig({ hooks, tools, kbs, providers, onChange }: AgentHooksConfigProps) {
+  const afterAgent = hooks.after_agent ?? [];
+
+  const updateHook = (idx: number, partial: Partial<HookConfig>) => {
+    const next = afterAgent.map((h, i) => (i === idx ? { ...h, ...partial } : h));
+    onChange({ ...hooks, after_agent: next });
+  };
+
+  const removeHook = (idx: number) => {
+    onChange({ ...hooks, after_agent: afterAgent.filter((_, i) => i !== idx) });
+  };
+
+  const addHook = (type: HookConfig['type']) => {
+    onChange({ ...hooks, after_agent: [...afterAgent, makeDefaultHook(type)] });
+  };
+
+  return (
+    <div className="mt-2">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-warmSilver">Hooks</span>
+      </div>
+
+      {afterAgent.length === 0 && (
+        <p className="mb-2 text-xs text-warmSilver">등록된 훅이 없습니다.</p>
+      )}
+
+      {afterAgent.map((hook, idx) => (
+        <div key={idx} className="mb-2 rounded border border-clay-border bg-white p-2">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-medium text-clayBlack">
+              {HOOK_TYPES.find((t) => t.id === hook.type)?.label ?? hook.type}
+            </span>
+            <button
+              onClick={() => removeHook(idx)}
+              className="text-warmSilver hover:text-red-500 transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          {/* Type-specific fields */}
+          {hook.type === 'tool_usage_checker' && (
+            <>
+              <Field label="필수 도구">
+                <div className="max-h-24 space-y-1 overflow-y-auto">
+                  {tools.length === 0 ? (
+                    <p className="text-[10px] text-warmSilver">MCP Tools에서 도구를 먼저 선택하세요</p>
+                  ) : (
+                    tools.map((t) => (
+                      <label key={t} className="flex items-center gap-1.5 text-[11px]">
+                        <input
+                          type="checkbox"
+                          checked={(hook.requiredTools ?? []).includes(t)}
+                          onChange={(e) => {
+                            const req = hook.requiredTools ?? [];
+                            const next = e.target.checked ? [...req, t] : req.filter((x) => x !== t);
+                            updateHook(idx, { requiredTools: next });
+                          }}
+                        />
+                        <span>{t}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </Field>
+            </>
+          )}
+
+          {hook.type === 'kb_citation_verifier' && (
+            <>
+              <Field label="지식베이스">
+                <Select
+                  value={hook.kbId ?? ''}
+                  onChange={(e) => updateHook(idx, { kbId: e.target.value })}
+                >
+                  <option value="">선택...</option>
+                  {kbs.map((kb) => (
+                    <option key={kb.id} value={kb.id}>{kb.name}</option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="인용 패턴 (정규식)">
+                <Input
+                  value={(hook.patterns ?? []).join(', ')}
+                  onChange={(e) => updateHook(idx, { patterns: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })}
+                  placeholder="제\s*\d+조, 판례\s*\d{4}"
+                  className="font-mono text-[10px]"
+                />
+              </Field>
+            </>
+          )}
+
+          {hook.type === 'llm_verifier' && (
+            <>
+              <Field label="검증 LLM Provider">
+                <Select
+                  value={hook.verifierProvider ?? ''}
+                  onChange={(e) => updateHook(idx, { verifierProvider: e.target.value, verifierModel: '' })}
+                >
+                  <option value="">선택...</option>
+                  {providers.filter((p) => p.enabled).map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="검증 LLM Model">
+                <Select
+                  value={hook.verifierModel ?? ''}
+                  onChange={(e) => updateHook(idx, { verifierModel: e.target.value })}
+                >
+                  <option value="">선택...</option>
+                  {(providers.find((p) => p.id === hook.verifierProvider)?.models ?? []).map((m) => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="검증 기준">
+                <Textarea
+                  value={hook.criteria ?? ''}
+                  onChange={(e) => updateHook(idx, { criteria: e.target.value })}
+                  rows={2}
+                  placeholder="예: 응답에 출처 없는 통계 수치가 포함되어 있으면 FAIL"
+                />
+              </Field>
+            </>
+          )}
+
+          {/* Shared fields */}
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <Field label="재시도">
+              <Input
+                type="number" min={0} max={5}
+                value={hook.maxRetries ?? 1}
+                onChange={(e) => { const v = parseInt(e.target.value); if (!Number.isNaN(v)) updateHook(idx, { maxRetries: v }); }}
+              />
+            </Field>
+            <Field label="소진 시">
+              <Select
+                value={hook.onExhausted ?? 'error'}
+                onChange={(e) => updateHook(idx, { onExhausted: e.target.value as HookConfig['onExhausted'] })}
+              >
+                {ON_EXHAUSTED_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+        </div>
+      ))}
+
+      {/* Add hook button */}
+      <div className="relative">
+        <Select
+          value=""
+          onChange={(e) => {
+            if (e.target.value) addHook(e.target.value as HookConfig['type']);
+            e.target.value = '';
+          }}
+        >
+          <option value="">+ Hook 추가</option>
+          {HOOK_TYPES.map((t) => (
+            <option key={t.id} value={t.id}>{t.label} — {t.description}</option>
+          ))}
+        </Select>
+      </div>
     </div>
   );
 }
@@ -293,6 +498,112 @@ function PromptTemplateConfig({ data, onChange }: { data: NodeData; onChange: (d
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+const OUTPUT_GUARDRAIL_CHECKS = [
+  { id: 'harmful', label: 'Harmful Response (유해 응답)' },
+  { id: 'pii_exposure', label: 'PII Exposure (개인정보 노출)' },
+  { id: 'format', label: 'Format Validation (형식 검증)' },
+  { id: 'custom', label: 'Custom Guardrail' },
+];
+
+function OutputGuardrailConfig({ data, onChange }: { data: NodeData; onChange: (d: Partial<NodeData>) => void }) {
+  const providers = useProviders();
+  const currentProvider = providers.find((p) => p.id === data.provider);
+  const selectedChecks = data.checks ?? ['harmful', 'pii_exposure'];
+  const formatRules = (data.format_rules as Record<string, unknown>) ?? {};
+
+  const toggleCheck = (id: string, checked: boolean) => {
+    const next = checked ? [...selectedChecks, id] : selectedChecks.filter((c) => c !== id);
+    onChange({ checks: next });
+  };
+
+  return (
+    <div className="space-y-3">
+      <Field label="검사 항목">
+        <div className="space-y-1.5">
+          {OUTPUT_GUARDRAIL_CHECKS.map(({ id, label }) => (
+            <label key={id} className="flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={selectedChecks.includes(id)}
+                onChange={(e) => toggleCheck(id, e.target.checked)}
+              />
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+      </Field>
+      <Field label="위반 시 동작">
+        <Select
+          value={data.action || 'block'}
+          onChange={(e) => onChange({ action: e.target.value })}
+        >
+          <option value="block">Block (차단)</option>
+          <option value="warn">Warn (경고 후 통과)</option>
+          <option value="mask">Mask (PII 마스킹, pii_exposure 전용)</option>
+        </Select>
+      </Field>
+      {selectedChecks.includes('custom') && (
+        <Field label="커스텀 규칙 설명">
+          <Textarea
+            value={data.custom_rule || ''}
+            onChange={(e) => onChange({ custom_rule: e.target.value })}
+            rows={3}
+            placeholder="예: 특정 정보가 포함된 응답 차단"
+          />
+        </Field>
+      )}
+      {selectedChecks.includes('format') && (
+        <>
+          <Field label="JSON 형식 필수">
+            <label className="flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={Boolean(formatRules['json'])}
+                onChange={(e) => onChange({ format_rules: { ...formatRules, json: e.target.checked || undefined } })}
+              />
+              <span>응답이 유효한 JSON이어야 함</span>
+            </label>
+          </Field>
+          <Field label="최대 길이 (max_length)">
+            <Input
+              type="number"
+              min={0}
+              placeholder="무제한"
+              value={(formatRules['max_length'] as number) ?? ''}
+              onChange={(e) => {
+                const v = parseInt(e.target.value);
+                onChange({ format_rules: { ...formatRules, max_length: Number.isNaN(v) ? undefined : v } });
+              }}
+            />
+          </Field>
+        </>
+      )}
+      <Field label="판정 LLM Provider">
+        <Select
+          value={data.provider || ''}
+          onChange={(e) => onChange({ provider: e.target.value, model: '' })}
+        >
+          <option value="">선택...</option>
+          {providers.filter((p) => p.enabled).map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </Select>
+      </Field>
+      <Field label="판정 LLM Model">
+        <Select
+          value={data.model || ''}
+          onChange={(e) => onChange({ model: e.target.value })}
+        >
+          <option value="">선택...</option>
+          {(currentProvider?.models || []).map((m) => (
+            <option key={m.id} value={m.id}>{m.name}</option>
+          ))}
+        </Select>
+      </Field>
     </div>
   );
 }
@@ -439,6 +750,9 @@ export function NodeConfigPanel({ node }: { node: Node }) {
         )}
         {(nodeType === 'input_guardrail') && (
           <InputGuardrailConfig data={data} onChange={handleChange} />
+        )}
+        {(nodeType === 'output_guardrail') && (
+          <OutputGuardrailConfig data={data} onChange={handleChange} />
         )}
         {(nodeType === 'chat_input' || nodeType === 'chat_output') && (
           <p className="text-xs text-warmSilver">
