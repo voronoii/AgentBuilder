@@ -11,6 +11,7 @@ from app.api.apps import router as apps_router
 from app.api.health import router as health_router
 from app.api.knowledge import router as knowledge_router
 from app.api.mcp import router as mcp_router
+from app.api.prompts import router as prompts_router
 from app.api.providers import router as providers_router
 from app.api.runs import routers as run_routers
 from app.api.serving import router as serving_router
@@ -64,8 +65,22 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:  # noqa: ARG001
     except Exception:  # noqa: BLE001
         _log.warning("startup runs recovery skipped (db not available)")
 
+    # Initialise the langgraph checkpointer (creates its own tables on first run).
+    try:
+        from app.services.workflow.checkpointer import get_checkpointer
+
+        await get_checkpointer()
+    except Exception:  # noqa: BLE001
+        _log.warning("startup: checkpointer init failed (multi-turn unavailable)", exc_info=True)
+
     yield
-    # ── shutdown (nothing to do yet) ───────────────────────────────────
+    # ── shutdown ───────────────────────────────────────────────────────
+    try:
+        from app.services.workflow.checkpointer import close_checkpointer
+
+        await close_checkpointer()
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def create_app() -> FastAPI:
@@ -99,6 +114,7 @@ def create_app() -> FastAPI:
     app.include_router(settings_router)
     app.include_router(apps_router)
     app.include_router(serving_router)
+    app.include_router(prompts_router)
     for router in run_routers:
         app.include_router(router)
 

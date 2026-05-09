@@ -19,6 +19,11 @@ class MCPTransport(enum.StrEnum):
     STREAMABLE_HTTP = "streamable_http"
 
 
+class MCPAuthType(enum.StrEnum):
+    NONE = "none"
+    OAUTH = "oauth"
+
+
 class MCPServer(Base):
     __tablename__ = "mcp_servers"
 
@@ -56,6 +61,30 @@ class MCPServer(Base):
         DateTime(timezone=True), nullable=True
     )
 
+    # --- OAuth (Streamable HTTP only; auto-discovery via RFC 8414/9728 + RFC 7591 DCR) ---
+    auth_type: Mapped[MCPAuthType] = mapped_column(
+        SaEnum(
+            MCPAuthType,
+            name="mcp_auth_type",
+            values_callable=lambda e: [x.value for x in e],
+            create_constraint=True,
+        ),
+        nullable=False,
+        default=MCPAuthType.NONE,
+        server_default=MCPAuthType.NONE.value,
+    )
+    oauth_client_id: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    oauth_client_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
+    oauth_authorize_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    oauth_token_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    oauth_scopes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    oauth_resource: Mapped[str | None] = mapped_column(Text, nullable=True)
+    oauth_access_token: Mapped[str | None] = mapped_column(Text, nullable=True)
+    oauth_refresh_token: Mapped[str | None] = mapped_column(Text, nullable=True)
+    oauth_token_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -65,3 +94,7 @@ class MCPServer(Base):
         onupdate=func.now(),
         nullable=False,
     )
+
+    @property
+    def oauth_connected(self) -> bool:
+        return bool(self.oauth_access_token)

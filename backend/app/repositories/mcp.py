@@ -22,6 +22,7 @@ class MCPRepository:
             transport=payload.transport,
             config=payload.config,
             env_vars=payload.env_vars,
+            auth_type=payload.auth_type,
         )
         self._session.add(server)
         await self._session.flush()

@@ -13,15 +13,16 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError, ErrorCode
-from app.models.mcp import MCPServer, MCPTransport
+from app.models.mcp import MCPAuthType, MCPServer, MCPTransport
 from app.repositories.mcp import MCPRepository
 from app.services.mcp.adapters import HttpSseAdapter, StdioAdapter, StreamableHttpAdapter
+from app.services.mcp.oauth import ensure_valid_token
 
 _log = logging.getLogger(__name__)
 
 
 def _build_adapter(
-    server: MCPServer, timeout: float
+    server: MCPServer, timeout: float, *, extra_headers: dict[str, str] | None = None
 ) -> StdioAdapter | HttpSseAdapter | StreamableHttpAdapter:
     cfg: dict[str, Any] = server.config or {}
     env: dict[str, str] = server.env_vars or {}
@@ -45,13 +46,26 @@ def _build_adapter(
             code=ErrorCode.MCP_DISCOVERY_FAILED,
             detail=f"{server.transport} server config missing 'url'",
         )
-    headers: dict[str, str] = cfg.get("headers", {})
+    headers: dict[str, str] = dict(cfg.get("headers", {}))
+    if extra_headers:
+        headers.update(extra_headers)
 
     if server.transport == MCPTransport.STREAMABLE_HTTP:
         return StreamableHttpAdapter(url=url, headers=headers, env=env, timeout=timeout)
 
     # HTTP_SSE
     return HttpSseAdapter(url=url, headers=headers, env=env, timeout=timeout)
+
+
+async def _oauth_headers(server: MCPServer, session: AsyncSession) -> dict[str, str]:
+    """Resolve Authorization header for OAuth-authed servers (Streamable HTTP only)."""
+    if server.auth_type != MCPAuthType.OAUTH:
+        return {}
+    if server.transport != MCPTransport.STREAMABLE_HTTP:
+        # OAuth is only wired for Streamable HTTP in this MVP.
+        return {}
+    token = await ensure_valid_token(server, session)
+    return {"Authorization": f"Bearer {token}"}
 
 
 async def discover_tools(
@@ -61,7 +75,8 @@ async def discover_tools(
     timeout: float = 30.0,
 ) -> list[dict[str, Any]]:
     """Connect to MCP server, list tools, cache in DB. Returns tool dicts."""
-    adapter = _build_adapter(server, timeout)
+    extra_headers = await _oauth_headers(server, session)
+    adapter = _build_adapter(server, timeout, extra_headers=extra_headers)
 
     try:
         await adapter.connect()

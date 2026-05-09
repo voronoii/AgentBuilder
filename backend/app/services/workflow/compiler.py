@@ -42,6 +42,8 @@ class WorkflowCompiler:
         self,
         nodes: list[dict],
         edges: list[dict],
+        *,
+        checkpointer: Any = None,
     ) -> Any:
         """Validate and compile the UI graph to a LangGraph CompiledGraph.
 
@@ -186,7 +188,11 @@ class WorkflowCompiler:
             graph.add_edge(sink_id, END)
 
         # Step 7 — Compile -------------------------------------------------
-        compiled = graph.compile()
+        compiled = (
+            graph.compile(checkpointer=checkpointer)
+            if checkpointer is not None
+            else graph.compile()
+        )
         _log.info(
             "compile: graph compiled successfully (%d processing nodes)",
             len(processing_ids_ordered),
@@ -289,6 +295,8 @@ async def compile_workflow(
     nodes: list[dict[str, Any]],
     edges: list[dict[str, Any]],
     session: AsyncSession,
+    *,
+    checkpointer: Any = None,
 ) -> Any:
     """Module-level shortcut: instantiate WorkflowCompiler and compile."""
-    return await WorkflowCompiler(session).compile(nodes, edges)
+    return await WorkflowCompiler(session).compile(nodes, edges, checkpointer=checkpointer)

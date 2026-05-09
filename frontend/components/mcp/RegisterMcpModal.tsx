@@ -67,7 +67,12 @@ export function RegisterMcpModal({ onClose, onCreated }: Props) {
   const [url, setUrl] = useState('');
   const [headersBlock, setHeadersBlock] = useState('');
 
+  // OAuth (Streamable HTTP only)
+  const [useOAuth, setUseOAuth] = useState(false);
+
   const isHttp = tab === 'http_sse' || tab === 'streamable_http';
+  const oauthAvailable = tab === 'streamable_http';
+  const oauthEnabled = oauthAvailable && useOAuth;
   const currentTab = TABS.find((t) => t.value === tab)!;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -98,6 +103,7 @@ export function RegisterMcpModal({ onClose, onCreated }: Props) {
         transport: tab,
         config,
         env_vars: parseKVBlock(envBlock),
+        auth_type: oauthEnabled ? 'oauth' : 'none',
       };
 
       const server = await createMcpServer(payload);
@@ -210,8 +216,34 @@ export function RegisterMcpModal({ onClose, onCreated }: Props) {
                   rows={3}
                   placeholder="Authorization=Bearer your-token"
                   className="font-mono"
+                  disabled={oauthEnabled}
                 />
+                {oauthEnabled && (
+                  <p className="mt-1 text-[11px] text-clay-text opacity-60">
+                    OAuth 사용 시 Authorization 헤더는 자동으로 주입됩니다.
+                  </p>
+                )}
               </div>
+              {oauthAvailable && (
+                <div className="rounded-lg border border-clay-border/50 bg-clay-surface/40 p-3">
+                  <label className="flex items-start gap-2 text-xs text-clay-text">
+                    <input
+                      type="checkbox"
+                      checked={useOAuth}
+                      onChange={(e) => setUseOAuth(e.target.checked)}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <span className="font-medium">OAuth 인증 사용</span>
+                      <span className="block text-[11px] opacity-60">
+                        등록 후 “연결” 버튼을 눌러 브라우저에서 로그인합니다. 서버는 표준
+                        OAuth 메타데이터(RFC 8414/9728)와 동적 클라이언트 등록(RFC 7591)을
+                        지원해야 합니다.
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              )}
             </>
           )}
 

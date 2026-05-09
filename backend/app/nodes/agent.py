@@ -6,18 +6,67 @@ import contextlib
 import logging
 import uuid
 from collections.abc import Callable
+from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.nodes.utils import get_input_text
 from app.repositories.mcp import MCPRepository
 from app.services.mcp.adapters import HttpSseAdapter, StdioAdapter, StreamableHttpAdapter
-from app.services.mcp.discovery import _build_adapter  # reuse adapter factory
+from app.services.mcp.discovery import _build_adapter, _oauth_headers  # reuse adapter factory
 from app.services.providers.chat.registry import make_chat_model_sync, resolve_provider_credentials
 from app.services.workflow.state import WorkflowState
 
 _log = logging.getLogger(__name__)
+# 임시 timing 측정용 — basicConfig가 없어 INFO가 묻히는 문제 회피
+_log.setLevel(logging.INFO)
+if not _log.handlers:
+    _h = logging.StreamHandler()
+    _h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+    _log.addHandler(_h)
+    _log.propagate = False
+
+
+def _json_schema_to_py_type(schema: dict) -> Any:
+    """Convert a JSON Schema fragment to a Python typing annotation.
+
+    Supports primitives, arrays (with item type), objects (as dict[str, Any]),
+    and `anyOf` / `oneOf` unions. Falls back to `str` when the schema is
+    unspecified — better than dropping array/object args silently to str,
+    which causes MCP servers to reject the call and the LLM to loop.
+    """
+    if not isinstance(schema, dict):
+        return str
+
+    # Union types (anyOf / oneOf) — pick the first concrete branch we can resolve.
+    for key in ("anyOf", "oneOf"):
+        if key in schema and isinstance(schema[key], list) and schema[key]:
+            for branch in schema[key]:
+                if isinstance(branch, dict) and branch.get("type") not in (None, "null"):
+                    return _json_schema_to_py_type(branch)
+            return str
+
+    t = schema.get("type")
+    if isinstance(t, list):
+        # ["string", "null"] etc. — drop null, pick first
+        non_null = [x for x in t if x != "null"]
+        t = non_null[0] if non_null else "string"
+
+    if t == "integer":
+        return int
+    if t == "number":
+        return float
+    if t == "boolean":
+        return bool
+    if t == "array":
+        items = schema.get("items", {})
+        item_type = _json_schema_to_py_type(items) if isinstance(items, dict) else str
+        return list[item_type]  # type: ignore[valid-type]
+    if t == "object":
+        return dict[str, Any]
+    return str
 
 
 async def _load_mcp_tools(
@@ -39,6 +88,8 @@ async def _load_mcp_tools(
     if not tool_names:
         return [], []
 
+    import time as _time
+
     from langchain_core.tools import StructuredTool
     from mcp import ClientSession
     from pydantic import BaseModel, create_model
@@ -59,15 +110,28 @@ async def _load_mcp_tools(
             continue
 
         try:
-            adapter = _build_adapter(server, timeout=30.0)
+            _t_conn_start = _time.perf_counter()
+            extra_headers = await _oauth_headers(server, session)
+            adapter = _build_adapter(server, timeout=30.0, extra_headers=extra_headers)
             await adapter.connect()
+            _t_conn_end = _time.perf_counter()
+            _log.info(
+                "mcp[%s]: TIMING connect=%.0fms",
+                server.name, (_t_conn_end - _t_conn_start) * 1000,
+            )
             connected_adapters.append(adapter)
         except Exception as exc:
             _log.warning("agent node: skipping MCP server %s — connect failed: %s", server.name, exc)
             continue
 
         try:
+            _t_lt_start = _time.perf_counter()
             raw_tools = await adapter.list_tools()
+            _t_lt_end = _time.perf_counter()
+            _log.info(
+                "mcp[%s]: TIMING list_tools=%.0fms tools=%d",
+                server.name, (_t_lt_end - _t_lt_start) * 1000, len(raw_tools),
+            )
         except Exception as exc:
             _log.warning("agent node: skipping MCP server %s — list_tools failed: %s", server.name, exc)
             with contextlib.suppress(Exception):
@@ -87,14 +151,12 @@ async def _load_mcp_tools(
             required: list[str] = input_schema.get("required", [])
             field_definitions: dict = {}
             for field_name, field_schema in props.items():
-                field_type = str
-                if field_schema.get("type") == "integer":
-                    field_type = int
-                elif field_schema.get("type") == "number":
-                    field_type = float
-                elif field_schema.get("type") == "boolean":
-                    field_type = bool
-                default = ... if field_name in required else None
+                field_type: Any = _json_schema_to_py_type(field_schema)
+                is_required = field_name in required
+                # Optional 필드는 Optional[T] | None 으로 — Pydantic이 None 기본값을 받도록.
+                if not is_required:
+                    field_type = field_type | None  # type: ignore[operator]
+                default = ... if is_required else None
                 field_definitions[field_name] = (field_type, default)
 
             ArgsSchema: type[BaseModel] = create_model(f"{t_name}_Args", **field_definitions)  # type: ignore[call-overload]
@@ -135,6 +197,22 @@ async def _load_mcp_tools(
             tools.append(lc_tool)
 
     return tools, connected_adapters
+
+
+_KST = ZoneInfo("Asia/Seoul")
+
+
+def _substitute_runtime_placeholders(text: str) -> str:
+    """Replace runtime placeholders in the agent instruction (KST)."""
+    if not text:
+        return text
+    now = datetime.now(_KST)
+    return (
+        text
+        .replace("{{current_date}}", now.strftime("%Y-%m-%d"))
+        .replace("{{current_datetime}}", now.strftime("%Y-%m-%d %H:%M:%S"))
+        .replace("{{current_weekday}}", now.strftime("%A"))
+    )
 
 
 async def _close_adapters(adapters: list[Any]) -> None:
@@ -278,7 +356,7 @@ async def make_agent_node(
     provider: str = node_data.get("provider", "openai")
     model_name: str = node_data.get("model", "gpt-4o")
     instruction: str = node_data.get("instruction", "") or ""
-    max_iterations: int = int(node_data.get("maxIterations", 5))
+    max_iterations: int = int(node_data.get("maxIterations", 15))
     tool_names: list[str] = node_data.get("tools", []) or []
     kb_configs: list[dict] = node_data.get("knowledgeBases", []) or []
 
@@ -299,26 +377,41 @@ async def make_agent_node(
         )
 
     async def agent_node(state: WorkflowState) -> dict:
+        import time as _time
+
         from langgraph.prebuilt import create_react_agent
 
         input_text = get_input_text(state, node_id, predecessor_ids=_predecessors)
-        _log.debug(
-            "agent [%s]: provider=%s model=%s tools=%s kb_count=%d input_len=%d",
+        _log.info(
+            "agent [%s]: START provider=%s model=%s tools=%s kb_count=%d input_len=%d",
             node_id, provider, model_name, tool_names, len(resolved_kbs), len(input_text),
         )
+        _t_node_start = _time.perf_counter()
 
         chat_model = make_chat_model_sync(
             provider=provider,
             model=model_name,
             credentials=credentials,
             temperature=0.7,
-            streaming=False,
+            streaming=True,
+        )
+        _t_chat_model_ready = _time.perf_counter()
+        _log.info(
+            "agent [%s]: TIMING chat_model_init=%.0fms",
+            node_id, (_t_chat_model_ready - _t_node_start) * 1000,
         )
 
         mcp_adapters: list[Any] = []
         try:
             if tool_names:
+                _t_mcp_start = _time.perf_counter()
                 mcp_tools, mcp_adapters = await _load_mcp_tools(tool_names, session)
+                _t_mcp_end = _time.perf_counter()
+                _log.info(
+                    "agent [%s]: TIMING mcp_load=%.0fms tools=%d adapters=%d",
+                    node_id, (_t_mcp_end - _t_mcp_start) * 1000,
+                    len(mcp_tools), len(mcp_adapters),
+                )
             else:
                 mcp_tools = []
 
@@ -330,24 +423,51 @@ async def make_agent_node(
                 "model": chat_model,
                 "tools": tools,
             }
-            if instruction:
-                agent_kwargs["prompt"] = instruction
+            runtime_instruction = _substitute_runtime_placeholders(instruction)
+            if runtime_instruction:
+                agent_kwargs["prompt"] = runtime_instruction
 
+            _t_compile_start = _time.perf_counter()
             react_agent = create_react_agent(**agent_kwargs)
+            _t_compile_end = _time.perf_counter()
+            _log.info(
+                "agent [%s]: TIMING react_agent_compile=%.0fms tools=%d",
+                node_id, (_t_compile_end - _t_compile_start) * 1000, len(tools),
+            )
 
             # recursion_limit accounts for tool-call + tool-response pairs plus final answer
             recursion_limit = max_iterations * 2 + 1
 
             # --- Hook loop ---
-            initial_messages: list[dict[str, str]] = [{"role": "user", "content": input_text}]
+            # Multi-turn: state.messages already contains full history hydrated
+            # by the checkpointer (when thread_id is set) plus the current
+            # user turn seeded by runtime. Pass it through directly so the
+            # react_agent sees prior context. Fall back to a single-message
+            # list only when state is empty (e.g. stateless test runs).
+            state_messages = state.get("messages") or []
+            initial_messages: list[Any] = (
+                list(state_messages)
+                if state_messages
+                else [{"role": "user", "content": input_text}]
+            )
             messages = initial_messages
             output: str = ""
             hook_max_retries = max(h.max_retries for h in _hooks) if _hooks else 0
 
             for attempt in range(hook_max_retries + 1):
+                _t_invoke_start = _time.perf_counter()
+                _log.info(
+                    "agent [%s]: react_agent.ainvoke START attempt=%d",
+                    node_id, attempt,
+                )
                 result = await react_agent.ainvoke(
                     {"messages": messages},
                     config={"recursion_limit": recursion_limit},
+                )
+                _t_invoke_end = _time.perf_counter()
+                _log.info(
+                    "agent [%s]: TIMING react_agent_total=%.0fms attempt=%d",
+                    node_id, (_t_invoke_end - _t_invoke_start) * 1000, attempt,
                 )
 
                 agent_messages = result.get("messages", [])

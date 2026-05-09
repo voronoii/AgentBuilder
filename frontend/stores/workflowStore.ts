@@ -30,15 +30,32 @@ function _scheduleAutoSave(saveFn: () => Promise<void>, onError: (err: unknown) 
   }, 1500);
 }
 
+// 디버그용 — PlaygroundPanel SSE 이벤트를 실시간으로 푸시받아
+// DebugEventPanel이 보여줄 수 있게 한다.
+export interface DebugEvent {
+  seq: number;            // 도착 순번
+  receivedAt: number;     // 클라이언트 수신 ms 타임스탬프
+  event_type: string;
+  node_id?: string | null;
+  payload?: Record<string, unknown> | null;
+}
+
 interface WorkflowStore {
   workflowId: string | null;
   workflowName: string;
   nodes: Node[];
   edges: Edge[];
   selectedNodeId: string | null;
+  executingNodeIds: Set<string>;
   saveError: string | null;
+  debugEvents: DebugEvent[];
 
   setSelectedNodeId: (id: string | null) => void;
+  addExecutingNode: (id: string) => void;
+  removeExecutingNode: (id: string) => void;
+  clearExecutingNodes: () => void;
+  pushDebugEvent: (ev: Omit<DebugEvent, 'seq' | 'receivedAt'>) => void;
+  clearDebugEvents: () => void;
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
@@ -57,9 +74,50 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
   nodes: [],
   edges: [],
   selectedNodeId: null,
+  executingNodeIds: new Set<string>(),
   saveError: null,
+  debugEvents: [],
 
   setSelectedNodeId: (id) => set({ selectedNodeId: id }),
+
+  addExecutingNode: (id) =>
+    set((state) => {
+      if (state.executingNodeIds.has(id)) return state;
+      const next = new Set(state.executingNodeIds);
+      next.add(id);
+      return { executingNodeIds: next };
+    }),
+  removeExecutingNode: (id) =>
+    set((state) => {
+      if (!state.executingNodeIds.has(id)) return state;
+      const next = new Set(state.executingNodeIds);
+      next.delete(id);
+      return { executingNodeIds: next };
+    }),
+  clearExecutingNodes: () =>
+    set((state) =>
+      state.executingNodeIds.size === 0 ? state : { executingNodeIds: new Set<string>() },
+    ),
+
+  pushDebugEvent: (ev) =>
+    set((state) => {
+      const seq = state.debugEvents.length === 0
+        ? 1
+        : state.debugEvents[state.debugEvents.length - 1].seq + 1;
+      const next: DebugEvent = {
+        seq,
+        receivedAt: Date.now(),
+        event_type: ev.event_type,
+        node_id: ev.node_id ?? null,
+        payload: ev.payload ?? null,
+      };
+      // 메모리 부담 방지 — 최근 500개만 유지
+      const tail = state.debugEvents.length >= 500
+        ? state.debugEvents.slice(-499)
+        : state.debugEvents;
+      return { debugEvents: [...tail, next] };
+    }),
+  clearDebugEvents: () => set({ debugEvents: [] }),
 
   onNodesChange: (changes) => {
     set((state) => ({ nodes: applyNodeChanges(changes, state.nodes) }));
@@ -140,6 +198,7 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
       nodes: [],
       edges: [],
       selectedNodeId: null,
+      executingNodeIds: new Set<string>(),
       saveError: null,
     }),
 }));

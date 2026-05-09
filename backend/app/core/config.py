@@ -67,6 +67,14 @@ class Settings(BaseSettings):
     # MCP tool system
     mcp_discovery_timeout: int = 30  # seconds per discovery attempt
 
+    # MCP OAuth
+    # Backend-served callback. Frontend must not handle the redirect directly.
+    mcp_oauth_redirect_uri: str = "http://localhost:28000/mcp/oauth/callback"
+    # PKCE/state TTL for in-flight authorization
+    mcp_oauth_state_ttl_seconds: int = 600
+    # URL to send the user back to after callback completes
+    mcp_oauth_post_callback_url: str = "http://localhost:23000/mcp"
+
     # Optional API keys for chat providers (loaded if present)
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None

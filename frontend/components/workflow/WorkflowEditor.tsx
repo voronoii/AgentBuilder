@@ -9,7 +9,7 @@ import {
   ReactFlowProvider,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Activity, ChevronLeft, LayoutGrid, Play, Plug, Rocket, Save } from 'lucide-react';
+import { Activity, Bug, ChevronLeft, LayoutGrid, Play, Plug, Rocket, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,7 @@ import { fetchAppByWorkflow, type PublishedApp } from '@/lib/apps';
 import { PublishModal } from '@/components/apps/PublishModal';
 import { PublishManageModal } from '@/components/apps/PublishManageModal';
 
+import { DebugEventPanel } from './DebugEventPanel';
 import { DeletableEdge } from './DeletableEdge';
 import { NodeConfigPanel } from './NodeConfigPanel';
 import { PlaygroundPanel } from './PlaygroundPanel';
@@ -71,6 +72,7 @@ function EditorInner({ workflowId }: { workflowId: string }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
   const [playgroundOpen, setPlaygroundOpen] = useState(false);
+  const [debugOpen, setDebugOpen] = useState(false);
   const [publishedApp, setPublishedApp] = useState<PublishedApp | null>(null);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
@@ -177,6 +179,20 @@ function EditorInner({ workflowId }: { workflowId: string }) {
           <div className="mx-2 h-5 w-px bg-clay-border" />
 
           <button
+            onClick={() => setDebugOpen((v) => !v)}
+            className={cn(
+              'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
+              debugOpen
+                ? 'bg-clayBlack text-white'
+                : 'text-clay-text hover:bg-oat-light',
+            )}
+            title="실시간 SSE 이벤트 로그"
+          >
+            <Bug className="h-3.5 w-3.5" />
+            디버그
+          </button>
+
+          <button
             onClick={() => setPlaygroundOpen((v) => !v)}
             className={cn(
               'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
@@ -251,6 +267,9 @@ function EditorInner({ workflowId }: { workflowId: string }) {
             onClose={() => setPlaygroundOpen(false)}
           />
         )}
+
+        {/* Debug event panel — 실시간 SSE 이벤트 + 활성 노드 표시 */}
+        {debugOpen && <DebugEventPanel onClose={() => setDebugOpen(false)} />}
       </div>
 
       {showPublishModal && (

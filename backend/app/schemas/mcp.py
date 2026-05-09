@@ -6,7 +6,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from app.models.mcp import MCPTransport
+from app.models.mcp import MCPAuthType, MCPTransport
 
 
 class ToolMetadata(BaseModel):
@@ -21,6 +21,7 @@ class MCPServerCreate(BaseModel):
     transport: MCPTransport
     config: dict[str, Any] = Field(default_factory=dict)
     env_vars: dict[str, str] = Field(default_factory=dict)
+    auth_type: MCPAuthType = MCPAuthType.NONE
 
 
 class MCPServerUpdate(BaseModel):
@@ -43,4 +44,16 @@ class MCPServerRead(BaseModel):
     last_discovered_at: datetime | None
     created_at: datetime
     updated_at: datetime
+    auth_type: MCPAuthType
+    oauth_connected: bool = False
+    oauth_token_expires_at: datetime | None = None
     model_config = {"from_attributes": True}
+
+
+class MCPOAuthStartResponse(BaseModel):
+    authorize_url: str
+
+
+class MCPOAuthStatus(BaseModel):
+    connected: bool
+    expires_at: datetime | None = None

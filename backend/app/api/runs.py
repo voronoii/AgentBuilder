@@ -65,8 +65,13 @@ async def create_run(
             detail="워크플로우를 찾을 수 없습니다.",
         )
 
-    # Determine user_input from body.input
-    user_input: str = body.input.get("message", "") if body.input else ""
+    # Determine user_input + optional conversation_id (multi-turn) from body.input
+    payload: dict = body.input or {}
+    user_input: str = payload.get("message", "")
+    conversation_id_raw = payload.get("conversation_id")
+    conversation_id: str | None = (
+        str(conversation_id_raw).strip() if conversation_id_raw else None
+    )
 
     # Create the WorkflowRun record (status=running)
     repo = RunRepository(session)
@@ -82,6 +87,7 @@ async def create_run(
         edges=wf.edges or [],
         user_input=user_input,
         session_factory=get_sessionmaker(),
+        conversation_id=conversation_id,
     )
 
     _log.info("create_run: started run_id=%s for workflow_id=%s", run.id, workflow_id)
@@ -172,6 +178,10 @@ async def _stream_from_queue(
     run_id: uuid.UUID,
 ) -> AsyncIterator[dict]:
     """Yield SSE events from the live asyncio.Queue until the sentinel (None)."""
+    import time as _time
+    _t_stream_open = _time.perf_counter()
+    print(f"[sse] STREAM_OPEN run_id={run_id}", flush=True)
+    _first_yield_logged = False
     while True:
         try:
             event = await asyncio.wait_for(queue.get(), timeout=60.0)
@@ -184,6 +194,10 @@ async def _stream_from_queue(
             # Sentinel — workflow finished (success, failed, or cancelled)
             yield {"event": "done", "data": json.dumps({"run_id": str(run_id)})}
             break
+
+        if not _first_yield_logged:
+            print(f"[sse] FIRST_YIELD t={(_time.perf_counter() - _t_stream_open)*1000:.0f}ms event_type={event.get('event_type','?')} run_id={run_id}", flush=True)
+            _first_yield_logged = True
 
         yield {
             "event": event.get("event_type", "event"),

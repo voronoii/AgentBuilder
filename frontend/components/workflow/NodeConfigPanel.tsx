@@ -2,13 +2,14 @@
 
 import type { Node } from '@xyflow/react';
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { NODE_STYLES } from './nodes/nodeStyles';
+import { InstructionGeneratorModal } from './InstructionGeneratorModal';
 
 import { apiBase } from '@/lib/api';
 import type { HookConfig, HooksConfig, NodeData, NodeType, Provider } from '@/lib/workflow';
@@ -126,6 +127,22 @@ function AgentConfig({ data, onChange }: { data: NodeData; onChange: (d: Partial
   const selectedKBs = data.knowledgeBases || [];
   const selectedKBIds = new Set(selectedKBs.map((kb) => kb.knowledgeBaseId));
 
+  const [generatorOpen, setGeneratorOpen] = useState(false);
+  const selectedKBNames = selectedKBs
+    .map((kb) => kbs.find((k) => k.id === kb.knowledgeBaseId)?.name)
+    .filter((name): name is string => Boolean(name));
+
+  const handleGenerated = (
+    instruction: string,
+    mode: 'overwrite' | 'append',
+  ) => {
+    if (mode === 'append' && data.instruction?.trim()) {
+      onChange({ instruction: `${data.instruction.trimEnd()}\n\n${instruction}` });
+    } else {
+      onChange({ instruction });
+    }
+  };
+
   return (
     <div className="space-y-3">
       <Field label="Provider">
@@ -150,7 +167,20 @@ function AgentConfig({ data, onChange }: { data: NodeData; onChange: (d: Partial
           ))}
         </Select>
       </Field>
-      <Field label="Instruction">
+      <Field
+        label="Instruction"
+        labelExtra={
+          <button
+            type="button"
+            onClick={() => setGeneratorOpen(true)}
+            className="inline-flex items-center gap-1 rounded-md border border-clay-border bg-white px-2 py-0.5 text-[10px] font-medium text-clay-text transition-colors hover:border-clay-accent hover:text-clay-accent"
+            title="AI로 지시문 작성"
+          >
+            <Sparkles className="h-3 w-3" />
+            AI로 작성
+          </button>
+        }
+      >
         <Textarea
           value={data.instruction || ''}
           onChange={(e) => onChange({ instruction: e.target.value })}
@@ -161,8 +191,8 @@ function AgentConfig({ data, onChange }: { data: NodeData; onChange: (d: Partial
         <Input
           type="number"
           min={1}
-          max={20}
-          value={data.maxIterations ?? 5}
+          max={50}
+          value={data.maxIterations ?? 15}
           onChange={(e) => { const v = parseInt(e.target.value); if (!Number.isNaN(v)) onChange({ maxIterations: v }); }}
         />
       </Field>
@@ -219,6 +249,16 @@ function AgentConfig({ data, onChange }: { data: NodeData; onChange: (d: Partial
         kbs={kbs}
         providers={providers}
         onChange={(hooks) => onChange({ hooks })}
+      />
+      <InstructionGeneratorModal
+        open={generatorOpen}
+        onOpenChange={setGeneratorOpen}
+        provider={data.provider || ''}
+        model={data.model || ''}
+        knowledgeBaseNames={selectedKBNames}
+        toolNames={selectedTools}
+        hasExistingInstruction={Boolean(data.instruction?.trim())}
+        onGenerated={handleGenerated}
       />
     </div>
   );
@@ -694,12 +734,23 @@ function InputGuardrailConfig({ data, onChange }: { data: NodeData; onChange: (d
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  labelExtra,
+  children,
+}: {
+  label: string;
+  labelExtra?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-warmSilver">
-        {label}
-      </label>
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <label className="block text-[11px] font-semibold uppercase tracking-wide text-warmSilver">
+          {label}
+        </label>
+        {labelExtra}
+      </div>
       {children}
     </div>
   );

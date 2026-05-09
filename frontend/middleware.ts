@@ -11,6 +11,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // SSE 스트림은 NextResponse.rewrite 가 chunk 를 buffer 하므로 Route
+  // Handler (/app/api/runs/[runId]/events/route.ts)가 fetch + new Response 로
+  // 직접 pass-through 하도록 middleware 는 통과시킨다.
+  if (/^\/api\/runs\/[^/]+\/events\/?$/.test(pathname)) {
+    return NextResponse.next();
+  }
+
   // Proxy all other /api/* to the backend
   if (pathname.startsWith('/api/')) {
     const backendPath = pathname.replace(/^\/api/, '');

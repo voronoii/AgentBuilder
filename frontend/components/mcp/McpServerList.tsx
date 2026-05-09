@@ -2,9 +2,16 @@
 
 import React from 'react';
 import { useState } from 'react';
-import { Terminal, Globe, Zap, RefreshCw, Trash2, Power } from 'lucide-react';
+import { Terminal, Globe, Zap, RefreshCw, Trash2, Power, Link as LinkIcon, Unlink } from 'lucide-react';
 import type { MCPServer } from '@/lib/mcp';
-import { deleteMcpServer, discoverTools, updateMcpServer } from '@/lib/mcp';
+import {
+  deleteMcpServer,
+  disconnectMcpOAuth,
+  discoverTools,
+  getMcpServer,
+  startMcpOAuth,
+  updateMcpServer,
+} from '@/lib/mcp';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ToolCatalog } from './ToolCatalog';
@@ -80,6 +87,65 @@ function ServerCard({
     }
   }
 
+  async function handleConnectOAuth() {
+    setBusy(true);
+    setError(null);
+    try {
+      const { authorize_url } = await startMcpOAuth(server.id);
+      const popup = window.open(authorize_url, 'mcp-oauth', 'width=520,height=720');
+      if (!popup) {
+        setError('팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요.');
+        return;
+      }
+      // Wait for popup to close or for postMessage from callback page,
+      // then refresh server state to pick up oauth_connected + discovered tools.
+      await new Promise<void>((resolve) => {
+        const onMsg = (ev: MessageEvent) => {
+          if (ev.data && ev.data.type === 'mcp-oauth') {
+            window.removeEventListener('message', onMsg);
+            clearInterval(t);
+            resolve();
+          }
+        };
+        window.addEventListener('message', onMsg);
+        const t = setInterval(() => {
+          if (popup.closed) {
+            window.removeEventListener('message', onMsg);
+            clearInterval(t);
+            resolve();
+          }
+        }, 500);
+      });
+      // Poll once or twice — discovery runs as a backend background task.
+      for (let i = 0; i < 4; i++) {
+        const fresh = await getMcpServer(server.id);
+        onUpdated(fresh);
+        if (fresh.oauth_connected) break;
+        await new Promise((r) => setTimeout(r, 750));
+      }
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'OAuth 연결 실패');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDisconnectOAuth() {
+    if (!confirm('OAuth 연결을 끊으시겠습니까? 이후 도구 호출 전에 다시 연결해야 합니다.')) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const updated = await disconnectMcpOAuth(server.id);
+      onUpdated(updated);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'OAuth 연결 해제 실패');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const isOAuth = server.auth_type === 'oauth';
+
   return (
     <div className="rounded-xl border border-clay-border bg-clay-surface p-4 shadow-sm">
       {/* Header */}
@@ -105,6 +171,28 @@ function ServerCard({
           <Badge variant={server.enabled ? 'success' : 'default'}>
             {server.enabled ? 'Active' : 'Inactive'}
           </Badge>
+          {isOAuth && (
+            <Badge variant={server.oauth_connected ? 'success' : 'default'}>
+              {server.oauth_connected ? 'OAuth 연결됨' : 'OAuth 연결 필요'}
+            </Badge>
+          )}
+          {isOAuth && !server.oauth_connected && (
+            <Button variant="outline" size="sm" onClick={handleConnectOAuth} disabled={busy}>
+              <LinkIcon className="h-3.5 w-3.5 mr-1" />
+              연결
+            </Button>
+          )}
+          {isOAuth && server.oauth_connected && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDisconnectOAuth}
+              disabled={busy}
+              title="OAuth 연결 해제"
+            >
+              <Unlink className="h-3.5 w-3.5" />
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
